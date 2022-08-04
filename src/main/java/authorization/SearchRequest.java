@@ -1,5 +1,6 @@
 package authorization;
 
+import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
@@ -14,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class SearchRequest {
-    private static final String clientId = "92476cfd818641c7a7caa7b68f91c52b";
-    private static final String clientSecret = "cbfe0a506b434906b1e0fe3ec361c308";
+    private static final String clientId = Main.config.clientID;
+    private static final String clientSecret = Main.config.clientSecret;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)
