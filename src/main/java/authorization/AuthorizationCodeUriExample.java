@@ -10,8 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class AuthorizationCodeUriExample {
-    private static final String clientId = "92476cfd818641c7a7caa7b68f91c52b";
-    private static final String clientSecret = "cbfe0a506b434906b1e0fe3ec361c308";
+    private static final String clientId = "code";
+    private static final String clientSecret = "secret";
     private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost:8080/");
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()

@@ -1,12 +1,15 @@
 package main;
 
 import handlers.ConsoleCommandHandler;
+import utils.ServerConfiguration;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Main {
+
+    public static ServerConfiguration config;
 
     public static void main(String[] args) {
         System.out.println("Spotify Artist Search. Please type in a Artist name");
