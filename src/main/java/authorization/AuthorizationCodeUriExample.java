@@ -1,5 +1,6 @@
 package authorization;
 
+import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
@@ -10,9 +11,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 public class AuthorizationCodeUriExample {
-    private static final String clientId = "code";
-    private static final String clientSecret = "secret";
-    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost:8080/");
+    private static final String clientId = Main.config.clientID;
+    private static final String clientSecret = Main.config.clientSecret;
+    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost/");
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)
@@ -20,15 +21,15 @@ public class AuthorizationCodeUriExample {
             .setRedirectUri(redirectUri)
             .build();
     private static final AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
-//          .state("x4xkmn9pu3j6ukrs8n")
-//          .scope("user-read-birthdate,user-read-email")
-//          .show_dialog(true)
+ //         .state("x4xkmn9pu3j6ukrs8n")
+          .scope("user-read-currently-playing,user-modify-playback-state")
+          .show_dialog(true)
             .build();
 
     public static void authorizationCodeUri_Sync() {
         final URI uri = authorizationCodeUriRequest.execute();
 
-        System.out.println("URI1: " + uri.toString());
+        System.out.println("URI: " + uri.toString());
     }
 
     public static void authorizationCodeUri_Async() {

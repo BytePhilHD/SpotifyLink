@@ -1,8 +1,14 @@
 package main;
 
 import authorization.AuthorizationCodeExample;
+import authorization.AuthorizationCodeUriExample;
 import authorization.SearchRequest;
 import enums.MessageType;
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import services.Console;
 import handlers.ConsoleCommandHandler;
 import utils.ServerConfiguration;
@@ -38,11 +44,30 @@ public class Main {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
         }
 
-        AuthorizationCodeExample.authorizationCode_Sync();
+        AuthorizationCodeUriExample.authorizationCodeUri_Sync();
+        startApp();
+
         //reader();
     }
 
-    //TODO Add File Server (Javalin)
+    public void startApp() throws IOException {
+
+        Javalin app = Javalin.create(config -> {
+            config.addStaticFiles("WebPages", Location.CLASSPATH);
+            config.showJavalinBanner = false;
+        }).start(80);
+
+        app.ws("/main", ws -> {
+            ws.onConnect(ctx -> {
+                System.out.println("Connection established.");
+            });
+            ws.onMessage(ctx -> {
+                String message = ctx.message().replace("?", "").replace("code=", "");
+                System.out.println("Message received! " + message);
+                AuthorizationCodeExample.authorizationCode_Sync(message);
+            });
+        });
+    }
 
     public static void reader() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
