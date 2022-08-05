@@ -7,9 +7,11 @@
 <body>
 <h2>Willkommen auf der Partykeller DJ Seite</h2>
 <p>Aktuell spielt folgender Song: </p>
-<p></p>
+<p>.</p>
 <p id="song-name">Loading...</p>
 <p id="song-artists">Loading...</p>
+<img id="song-cover" alt="Song-Cover" src=""
+     width=300" height="300">
 
 </body>
 <script>
@@ -25,6 +27,10 @@
           }
           else if (wsinput.includes("Song-Artists: ")) {
               document.getElementById("song-artists").innerHTML = wsinput;
+          } else if (wsinput.includes("Song-Cover: ")) {
+              wsinput = wsinput.replace("Song-Cover: ", "");
+              document.getElementById("song-cover").src = wsinput;
+              console.log("Link: " + wsinput);
           }
 
       }

@@ -70,6 +70,7 @@ public class Main {
                 ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
                 ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
                 ctx.send("Song-Artists: " + getArtists(artists));
+                ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
             });
             ws.onMessage(ctx -> {
 

@@ -85,6 +85,16 @@ public class SpotifyAPIConnector {
         } catch (Exception e1) {}
         return null;
     }
+
+    public String getAlbumCover() {
+        try {
+            String trackID = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getId();
+            return spotifyApi.getTrack(trackID).build().execute().getAlbum().getImages()[0].getUrl();
+        } catch (Exception e1) {}
+        return null;
+    }
+
+
     public ArtistSimplified[] currentSongArtist() {
         try {
             String id = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getId();
