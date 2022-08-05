@@ -22,7 +22,7 @@ public class AuthenticationURI {
             .build();
     private static final AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
  //         .state("x4xkmn9pu3j6ukrs8n")
-          .scope("user-read-currently-playing")
+          .scope("user-read-currently-playing,user-modify-playback-state")
           .show_dialog(true)
             .build();
 

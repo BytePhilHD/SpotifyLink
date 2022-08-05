@@ -35,14 +35,9 @@ public class SearchRequest {
 
             final Paging<Track> trackPaging = spotifyApi.searchTracks(searchrequest).limit(1).build().execute();
 
-            String answer = trackPaging.toString();
+            // TODO mehrere Songs raussuchen und user auswählen lassen welcher der richtige ist
 
-            System.out.println(answer);
-
-            int iend = answer.indexOf("id=");
-            String id = answer.substring(iend + 3, iend + 25);
-
-            return id;
+            return trackPaging.getItems()[0].getUri();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }

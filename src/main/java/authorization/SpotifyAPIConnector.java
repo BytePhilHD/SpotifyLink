@@ -1,5 +1,6 @@
 package authorization;
 
+import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
@@ -8,6 +9,7 @@ import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCrede
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import org.apache.hc.core5.http.ParseException;
+import services.Console;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -77,6 +79,15 @@ public class SpotifyAPIConnector {
         } catch (SpotifyWebApiException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void addSongtoList(String uri) {
+        try {
+            spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
+        } catch (Exception e1) {
+            Console.printout(e1.getMessage(), MessageType.ERROR);
+        }
+
     }
 
     public String readCurrentSong() {

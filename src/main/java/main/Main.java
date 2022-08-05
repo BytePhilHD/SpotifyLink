@@ -39,11 +39,10 @@ public class Main {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
         }
 
-        //SearchRequest.searchRequest("God save the rave");
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
 
-        //reader();
+        reader();
     }
 
     public void startApp() throws IOException {
@@ -104,6 +103,23 @@ public class Main {
         }
         else {
             return "ERROR";
+        }
+    }
+
+    public static void reader() {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("READER");
+        String input = null;
+        try {
+            input = reader.readLine();
+            System.out.println("You inputed: " + input);
+            String uri = SearchRequest.searchRequest(input);
+            System.out.println("URI: " + uri);
+            new SpotifyAPIConnector().addSongtoList(uri);
+            reader();
+        } catch (IOException e1) {
+            System.out.println(e1.getMessage());
         }
     }
 
