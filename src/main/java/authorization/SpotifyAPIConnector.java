@@ -5,6 +5,7 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import org.apache.hc.core5.http.ParseException;
 
@@ -12,14 +13,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
-public class AuthorizationCodeExample {
+/*
+
+        API from https://github.com/spotify-web-api-java
+ */
+
+public class SpotifyAPIConnector {
     private static final String clientId = Main.config.clientID;
     private static final String clientSecret = Main.config.clientSecret;
-    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost/");
+    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost/auth.html");
     public static String code = "";
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
@@ -64,6 +67,10 @@ public class AuthorizationCodeExample {
             } else if (input.equalsIgnoreCase("read")) {
                 System.out.println("READ: " + spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getName());
                 reader();
+            } else if (input.contains("search")) {
+                input.replace("search", "");
+
+               // spotifyApi.addItemToUsersPlaybackQueue()
             }
         } catch (IOException e1) {} catch (ParseException e) {
             throw new RuntimeException(e);
@@ -72,29 +79,19 @@ public class AuthorizationCodeExample {
         }
     }
 
-    public static void authorizationCode_Async() {
+    public String readCurrentSong() {
         try {
-            final CompletableFuture<AuthorizationCodeCredentials> authorizationCodeCredentialsFuture = authorizationCodeRequest.executeAsync();
+            return spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getName();
+        } catch (Exception e1) {}
+        return null;
+    }
+    public ArtistSimplified[] currentSongArtist() {
+        try {
+            String id = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getId();
+            return spotifyApi.getTrack(id).build().execute().getArtists();
+        } catch (Exception e1) {}
 
-            // Thread free to do other tasks...
-
-            // Example Only. Never block in production code.
-            final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
-
-            // Set access and refresh token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-            spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-
-            System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
-        } catch (CompletionException e) {
-            System.out.println("Error: " + e.getCause().getMessage());
-        } catch (CancellationException e) {
-            System.out.println("Async operation cancelled.");
-        }
+        return null;
     }
 
-    public static void main(String[] args) {
-        //authorizationCode_Sync();
-        authorizationCode_Async();
-    }
 }

@@ -10,10 +10,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-public class AuthorizationCodeUriExample {
+public class AuthenticationURI {
     private static final String clientId = Main.config.clientID;
     private static final String clientSecret = Main.config.clientSecret;
-    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost/");
+    private static final URI redirectUri = SpotifyHttpManager.makeUri("http://localhost/auth.html");
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)

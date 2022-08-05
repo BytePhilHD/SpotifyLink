@@ -1,4 +1,4 @@
-package authorization;
+package handlers;
 
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -6,6 +6,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
 import org.apache.hc.core5.http.ParseException;
 
@@ -25,7 +26,29 @@ public class SearchRequest {
     private static final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials()
             .build();
 
-    private static String q = "Martin Garrix";
+    public static String searchRequest(String searchrequest) {
+        try {
+            final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
+
+            // Set access token for further "spotifyApi" object usage
+            spotifyApi.setAccessToken(clientCredentials.getAccessToken());
+
+            final Paging<Track> trackPaging = spotifyApi.searchTracks(searchrequest).limit(1).build().execute();
+
+            String answer = trackPaging.toString();
+
+            System.out.println(answer);
+
+            int iend = answer.indexOf("id=");
+            String id = answer.substring(iend + 3, iend + 25);
+
+            return id;
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return null;
+    }
+
 
     public static void clientCredentials_Sync(String searchrequest) {
         try {
@@ -34,9 +57,9 @@ public class SearchRequest {
             // Set access token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(clientCredentials.getAccessToken());
 
-            final Paging<Artist> artistPaging = spotifyApi.searchArtists(searchrequest).limit(1).build().execute();
+            final Paging<Track> trackPaging = spotifyApi.searchTracks(searchrequest).limit(1).build().execute();
 
-            String answer = artistPaging.toString();
+            String answer = trackPaging.toString();
 
             int iend = answer.indexOf("id=");
             String id = answer.substring(iend+3, iend+25);

@@ -1,24 +1,19 @@
 package main;
 
-import authorization.AuthorizationCodeExample;
-import authorization.AuthorizationCodeUriExample;
-import authorization.SearchRequest;
+import authorization.SpotifyAPIConnector;
+import authorization.AuthenticationURI;
+import handlers.SearchRequest;
 import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
+import se.michaelthelin.spotify.model_objects.specification.Artist;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import services.Console;
-import handlers.ConsoleCommandHandler;
 import utils.ServerConfiguration;
 
 import java.io.*;
+import java.lang.reflect.Array;
 
-
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 public class Main {
 
     public static ServerConfiguration config;
@@ -44,7 +39,8 @@ public class Main {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
         }
 
-        AuthorizationCodeUriExample.authorizationCodeUri_Sync();
+        AuthenticationURI.authorizationCodeUri_Sync();
+        SearchRequest.searchRequest("God save the rave");
         startApp();
 
         //reader();
@@ -57,16 +53,43 @@ public class Main {
             config.showJavalinBanner = false;
         }).start(80);
 
-        app.ws("/main", ws -> {
+        app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
                 System.out.println("Connection established.");
             });
             ws.onMessage(ctx -> {
                 String message = ctx.message().replace("?", "").replace("code=", "");
                 System.out.println("Message received! " + message);
-                AuthorizationCodeExample.authorizationCode_Sync(message);
+                SpotifyAPIConnector.authorizationCode_Sync(message);
             });
         });
+
+        app.ws("/main", ws -> {
+            ws.onConnect(ctx -> {
+                Console.printout("User connected to main websocket.", MessageType.INFO);
+                ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
+                ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
+                ctx.send("Song-Artists: " + getArtists(artists));
+            });
+            ws.onMessage(ctx -> {
+
+            });
+        });
+    }
+
+    private String getArtists(ArtistSimplified[] artists) {
+        if (artists.length == 1) {
+            return artists[0].getName();
+        } else if (artists.length == 2) {
+            return artists[0].getName() + ", " + artists[1].getName();
+        } else if (artists.length == 3) {
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName();
+        } else if (artists.length == 4) {
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName();
+        }
+        else {
+            return "ERROR";
+        }
     }
 
     public static void reader() {
