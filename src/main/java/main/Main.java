@@ -39,9 +39,9 @@ public class Main {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
         }
 
-        AuthenticationURI.authorizationCodeUri_Sync();
-        SearchRequest.searchRequest("God save the rave");
+        //SearchRequest.searchRequest("God save the rave");
         startApp();
+        AuthenticationURI.authorizationCodeUri_Sync();
 
         //reader();
     }
@@ -67,13 +67,27 @@ public class Main {
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
                 Console.printout("User connected to main websocket.", MessageType.INFO);
-                ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
-                ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
-                ctx.send("Song-Artists: " + getArtists(artists));
-                ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
+                try {
+                    ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
+                    ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
+                    ctx.send("Song-Artists: " + getArtists(artists));
+                    ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
+                } catch (Exception e1) {
+                    Console.printout("Main websocket found no playing song", MessageType.ERROR);
+                }
             });
             ws.onMessage(ctx -> {
-
+                if (ctx.message().equalsIgnoreCase("refresh")) {
+                    Console.printout("Refresh received", MessageType.DEBUG);
+                    try {
+                        ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
+                        ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
+                        ctx.send("Song-Artists: " + getArtists(artists));
+                        ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
+                    } catch (Exception e1) {
+                        ctx.send("Not-playing");
+                    }
+                }
             });
         });
     }
@@ -91,16 +105,6 @@ public class Main {
         else {
             return "ERROR";
         }
-    }
-
-    public static void reader() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
-        String input = null;
-        try {
-            input = reader.readLine();
-            SearchRequest.clientCredentials_Sync(input);
-        } catch (IOException e1) {}
     }
 
     public void copyFile(File newFile, String existingFile) throws IOException {

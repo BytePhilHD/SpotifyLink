@@ -22,14 +22,14 @@ public class AuthenticationURI {
             .build();
     private static final AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
  //         .state("x4xkmn9pu3j6ukrs8n")
-          .scope("user-read-currently-playing,user-modify-playback-state")
+          .scope("user-read-currently-playing")
           .show_dialog(true)
             .build();
 
     public static void authorizationCodeUri_Sync() {
         final URI uri = authorizationCodeUriRequest.execute();
 
-        System.out.println("URI: " + uri.toString());
+        System.out.println("Link to authenticate: " + uri.toString());
     }
 
     public static void authorizationCodeUri_Async() {

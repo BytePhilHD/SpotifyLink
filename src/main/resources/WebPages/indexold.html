@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Partykeller DJ</title>
+</head>
+<body>
+<h2>Willkommen auf der Partykeller DJ Seite</h2>
+<p>Aktuell spielt folgender Song: </p>
+<p>.</p>
+<p id="song-name">Loading...</p>
+<p id="song-artists">Loading...</p>
+<img id="song-cover" alt="Song-Cover" src=""
+     width=300" height="300">
+
+</body>
+<script>
+  window.onload = setupWebSocket;
+  let ws;
+
+  function setupWebSocket() {
+      ws = new WebSocket("ws://" + location.hostname + "/main");
+
+      setInterval(refresh, 3000);
+
+      ws.onmessage = messageEvent => {
+          let wsinput = messageEvent.data;
+          if (wsinput.includes("Song-Name: ")) {
+              document.getElementById("song-name").innerHTML = wsinput;
+          }
+          else if (wsinput.includes("Song-Artists: ")) {
+              document.getElementById("song-artists").innerHTML = wsinput;
+          } else if (wsinput.includes("Song-Cover: ")) {
+              wsinput = wsinput.replace("Song-Cover: ", "");
+              document.getElementById("song-cover").src = wsinput;
+              console.log("Link: " + wsinput);
+          } else if (wsinput.includes("not-playing")) {
+              document.getElementById("song-name").innerHTML = "Nothing playing";
+              document.getElementById("song-artists").innerHTML = "Nothing playing";
+          }
+
+      }
+  }
+  function refresh() {
+      ws.send("refresh");
+  }
+
+</script>
+
+</html>

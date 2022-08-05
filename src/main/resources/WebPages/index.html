@@ -1,40 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>Partykeller DJ</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Brand</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/untitled.css">
 </head>
-<body>
-<h2>Willkommen auf der Partykeller DJ Seite</h2>
-<p>Aktuell spielt folgender Song: </p>
-<p>.</p>
-<p id="song-name">Loading...</p>
-<p id="song-artists">Loading...</p>
-<img id="song-cover" alt="Song-Cover" src=""
-     width=300" height="300">
 
-</body>
-<script>
-  window.onload = setupWebSocket;
+<body style="background: var(--bs-body-color);margin-bottom: -1081px;">
+    <nav class="navbar navbar-light navbar-expand bg-light navigation-clean">
+        <div class="container"><a class="navbar-brand" href="#"><strong><span style="color: rgb(255, 255, 255);">Partykeller</span></strong></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"></button>
+            <div class="collapse navbar-collapse" id="navcol-1" style="color: var(--bs-indigo);"><a class="btn btn-primary ms-auto" role="button" href="#" style="background: var(--bs-body-color);border-style: none;"><strong>Anmelden</strong></a></div>
+            <header style="margin-left: 11px;color: var(--bs-indigo);background: var(--bs-indigo);"></header>
+        </div>
+    </nav>
+    <header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-bottom: 1px;">
+        <picture style="width: 275px;height: 275;"><img id="song-cover" style="width: 300px;height: 300px;margin-bottom: 19px;"></picture>
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-9 mx-auto position-relative" style="margin-bottom: 4px;">
+                    <h1 id="song-name" class="mb-5" style="padding-bottom: 0px;margin-bottom: 94px;">Lade Song...</h1>
+                    <h1 id="song-artists" class="mb-5" style="margin: -39px;margin-bottom: 170px;padding-bottom: 0px;padding-right: 22px;width: 372px;margin-left: -15px;">Lade Künstler...</h1>
+                </div>
+            </div>
+        </div><script>
+ window.onload = setupWebSocket;
+ let ws;
 
-  function setupWebSocket() {
-      ws = new WebSocket("ws://" + location.hostname + "/main");
+ function setupWebSocket() {
+     ws = new WebSocket("ws://" + location.hostname + "/main");
 
-      ws.onmessage = messageEvent => {
-          let wsinput = messageEvent.data;
-          if (wsinput.includes("Song-Name: ")) {
-              document.getElementById("song-name").innerHTML = wsinput;
-          }
-          else if (wsinput.includes("Song-Artists: ")) {
-              document.getElementById("song-artists").innerHTML = wsinput;
-          } else if (wsinput.includes("Song-Cover: ")) {
-              wsinput = wsinput.replace("Song-Cover: ", "");
-              document.getElementById("song-cover").src = wsinput;
-              console.log("Link: " + wsinput);
-          }
+     setInterval(refresh, 3000);
 
-      }
-  }
+     ws.onmessage = messageEvent => {
+         let wsinput = messageEvent.data;
+         if (wsinput.includes("Song-Name: ")) {
+             wsinput = wsinput.replace("Song-Name: ", "");
+             document.getElementById("song-name").innerHTML = wsinput;
+         }
+         else if (wsinput.includes("Song-Artists: ")) {
+             wsinput = wsinput.replace("Song-Artists: ", "");
+             document.getElementById("song-artists").innerHTML = wsinput;
+         } else if (wsinput.includes("Song-Cover: ")) {
+             wsinput = wsinput.replace("Song-Cover: ", "");
+             document.getElementById("song-cover").src = wsinput;
+             console.log("Link: " + wsinput);
+         } else if (wsinput.includes("not-playing")) {
+             document.getElementById("song-name").innerHTML = "Nothing playing";
+             document.getElementById("song-artists").innerHTML = "Nothing playing";
+         }
+
+     }
+ }
+ function refresh() {
+     ws.send("refresh");
+ }
+
 </script>
+
+
+
+
+    </header><input class="form-control form-control-lg" type="email" placeholder="Nach Song suchen..." background: var(--bs-body-color) />
+    <div class="overlay" style="background: rgba(18,18,18,255);"></div>
+    <div class="overlay" style="background: rgba(18,18,18,255);"></div>
+    <section class="showcase"></section>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
 
 </html>
