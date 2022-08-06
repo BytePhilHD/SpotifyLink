@@ -84,6 +84,7 @@ public class SpotifyAPIConnector {
     public void addSongtoList(String uri) {
         try {
             spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
+            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
         } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
         }

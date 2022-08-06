@@ -37,25 +37,25 @@
                 <div class="p-4" style="height: 80px;">
                     <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-1-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                         <div>
-                            <p class="fw-bold mb-0" id="search-1-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="fw-bold mb-0" id="search-1-name" style="color: var(--bs-blue);text-align: left;width: 175px;">Song-Name</p>
                             <p class="text-muted mb-0" id="search-1-artists" style="text-align: left;">Song-Artists</p>
-                        </div>
+                        </div><button class="btn btn-primary" id="search-1-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                     </div>
                 </div>
                 <div class="p-4" style="height: 80px;">
                     <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-2-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                         <div>
-                            <p class="fw-bold mb-0" id="search-2-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="fw-bold mb-0" id="search-2-name" style="color: var(--bs-blue);text-align: left;width: 175px;">Song-Name</p>
                             <p class="text-muted mb-0" id="search-2-artists" style="text-align: left;">Song-Artists</p>
-                        </div>
+                        </div><button class="btn btn-primary" id="search-2-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                     </div>
                 </div>
                 <div class="p-4">
                     <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-3-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                         <div>
-                            <p class="fw-bold mb-0" id="search-3-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="fw-bold mb-0" id="search-3-name" style="color: var(--bs-blue);text-align: left;width: 175px;">Song-Name</p>
                             <p class="text-muted mb-0" id="search-3-artists" style="text-align: left;">Song-Artists</p>
-                        </div>
+                        </div><button class="btn btn-primary" id="search-3-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                     </div>
                 </div>
             </div>
@@ -64,62 +64,88 @@
     <section class="showcase"></section><script>
 window.onload = setupWebSocket;
 let ws;
+let uri1;
+let uri2;
+let uri3;
 
 function setupWebSocket() {
-    ws = new WebSocket("ws://" + location.hostname + "/main");
+   ws = new WebSocket("ws://" + location.hostname + "/main");
 
-    setInterval(refresh, 3000);
+   setInterval(refresh, 1000);
 
-    ws.onmessage = messageEvent => {
-        let wsinput = messageEvent.data;
-        if (wsinput.includes("Song-Name: ")) {
-            wsinput = wsinput.replace("Song-Name: ", "");
-            document.getElementById("song-name").innerHTML = wsinput;
-        }
-        else if (wsinput.includes("Song-Artists: ")) {
-            wsinput = wsinput.replace("Song-Artists: ", "");
-            document.getElementById("song-artists").innerHTML = wsinput;
-        } else if (wsinput.includes("Song-Cover: ")) {
-            wsinput = wsinput.replace("Song-Cover: ", "");
-            document.getElementById("song-cover").src = wsinput;
-            console.log("Link: " + wsinput);
-        } else if (wsinput.includes("not-playing")) {
-            document.getElementById("song-name").innerHTML = "Nothing playing";
-            document.getElementById("song-artists").innerHTML = "Nothing playing";
-        } else if (wsinput.includes("search-1-name")) {
-            document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
-        } else if (wsinput.includes("search-1-artists")) {
-            document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
-        } else if (wsinput.includes("search-1-cover")) {
-            document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
-        }
-        else if (wsinput.includes("search-2-name")) {
-            document.getElementById("search-2-name").innerHTML = wsinput.replace("search-2-name: ", "");
-        } else if (wsinput.includes("search-2-artists")) {
-            document.getElementById("search-2-artists").innerHTML = wsinput.replace("search-2-artists: ", "");
-        } else if (wsinput.includes("search-2-cover")) {
-            document.getElementById("search-2-cover").src = wsinput.replace("search-2-cover: ", "");
-        }
-        else if (wsinput.includes("search-3-name")) {
-            document.getElementById("search-3-name").innerHTML = wsinput.replace("search-3-name: ", "");
-        } else if (wsinput.includes("search-3-artists")) {
-            document.getElementById("search-3-artists").innerHTML = wsinput.replace("search-3-artists: ", "");
-        } else if (wsinput.includes("search-3-cover")) {
-            document.getElementById("search-3-cover").src = wsinput.replace("search-3-cover: ", "");
-        }
+   ws.onmessage = messageEvent => {
+       let wsinput = messageEvent.data;
+       if (wsinput.includes("Song-Name: ")) {
+           wsinput = wsinput.replace("Song-Name: ", "");
+           document.getElementById("song-name").innerHTML = wsinput;
+       }
+       else if (wsinput.includes("Song-Artists: ")) {
+           wsinput = wsinput.replace("Song-Artists: ", "");
+           document.getElementById("song-artists").innerHTML = wsinput;
+       } else if (wsinput.includes("Song-Cover: ")) {
+           wsinput = wsinput.replace("Song-Cover: ", "");
+           document.getElementById("song-cover").src = wsinput;
+           console.log("Link: " + wsinput);
+       } else if (wsinput.includes("not-playing")) {
+           document.getElementById("song-name").innerHTML = "Nothing playing";
+           document.getElementById("song-artists").innerHTML = "Nothing playing";
+       } else if (wsinput.includes("search-1-name")) {
+           document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
+       } else if (wsinput.includes("search-1-artists")) {
+           document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
+       } else if (wsinput.includes("search-1-cover")) {
+           document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
+       } else if (wsinput.includes("search-1-uri")) {
+           uri1 = wsinput.replace("search-1-uri: ", "");
+       }
+       else if (wsinput.includes("search-2-name")) {
+           document.getElementById("search-2-name").innerHTML = wsinput.replace("search-2-name: ", "");
+       } else if (wsinput.includes("search-2-artists")) {
+           document.getElementById("search-2-artists").innerHTML = wsinput.replace("search-2-artists: ", "");
+       } else if (wsinput.includes("search-2-cover")) {
+           document.getElementById("search-2-cover").src = wsinput.replace("search-2-cover: ", "");
+       } else if (wsinput.includes("search-2-uri")) {
+           uri2 = wsinput.replace("search-2-uri: ", "");
+       }
+       else if (wsinput.includes("search-3-name")) {
+           document.getElementById("search-3-name").innerHTML = wsinput.replace("search-3-name: ", "");
+       } else if (wsinput.includes("search-3-artists")) {
+           document.getElementById("search-3-artists").innerHTML = wsinput.replace("search-3-artists: ", "");
+       } else if (wsinput.includes("search-3-cover")) {
+           document.getElementById("search-3-cover").src = wsinput.replace("search-3-cover: ", "");
+       } else if (wsinput.includes("search-3-uri")) {
+           uri3 = wsinput.replace("search-3-uri: ", "");
+       }
 
-    }
+   }
 
 }
+// Buttons for selecting the right song
+document.getElementById('search-1-button').onclick = function() {
+    ws.send("Song-Play: " + uri1);
+}
+document.getElementById('search-2-button').onclick = function() {
+    ws.send("Song-Play: " + uri2);
+}
+document.getElementById('search-3-button').onclick = function() {
+    ws.send("Song-Play: " + uri3);
+}
+
+// refresh function which gets timed every 1000 ms (on the top)
 function refresh() {
-    ws.send("refresh");
+   ws.send("refresh");
+   if (input.value != null) {
+       ws.send("Search: " + input.value);
+   }
 }
+
+// if input is entered, the value gets sent to the websocket
 const input = document.querySelector('#searchbar');
 
 input.addEventListener('change', updateValue);
 
 function updateValue() {
-    ws.send("Search: " + input.value);
+   ws.send("Search: " + input.value);
 }
 
 

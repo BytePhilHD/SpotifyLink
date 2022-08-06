@@ -15,10 +15,13 @@ import utils.ServerConfiguration;
 
 import java.io.*;
 import java.lang.reflect.Array;
+import java.util.HashMap;
 
 public class Main {
 
     public static ServerConfiguration config;
+
+    private HashMap<String, String> userSearch = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
@@ -91,21 +94,41 @@ public class Main {
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird
                 }
                 else if (ctx.message().contains("Search:")) {
-                    String message = ctx.message();
-                    System.out.println(message);
+                    if (ctx.message().replace("Search: ", "").equalsIgnoreCase("")) {
+                        return;
+                    }
+                    if (userSearch.containsKey(ctx.getSessionId())) {
+                        if (userSearch.get(ctx.getSessionId()).equalsIgnoreCase(ctx.message())) {
+                            return;
+                        }
+                    }
+                    try {
+                        String message = ctx.message();
+                        System.out.println(message);
 
-                    Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
-                    ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
-                    ctx.send("search-1-artists: " + getArtists(trackPaging.getItems()[0].getArtists()));
-                    ctx.send("search-1-cover: " + trackPaging.getItems()[0].getAlbum().getImages()[0].getUrl());
+                        Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
+                        ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
+                        ctx.send("search-1-artists: " + getArtists(trackPaging.getItems()[0].getArtists()));
+                        ctx.send("search-1-cover: " + trackPaging.getItems()[0].getAlbum().getImages()[0].getUrl());
+                        ctx.send("search-1-uri: " + trackPaging.getItems()[0].getUri());
 
-                    ctx.send("search-2-name: " + trackPaging.getItems()[1].getName());
-                    ctx.send("search-2-artists: " + getArtists(trackPaging.getItems()[1].getArtists()));
-                    ctx.send("search-2-cover: " + trackPaging.getItems()[1].getAlbum().getImages()[0].getUrl());
+                        ctx.send("search-2-name: " + trackPaging.getItems()[1].getName());
+                        ctx.send("search-2-artists: " + getArtists(trackPaging.getItems()[1].getArtists()));
+                        ctx.send("search-2-cover: " + trackPaging.getItems()[1].getAlbum().getImages()[0].getUrl());
+                        ctx.send("search-2-uri: " + trackPaging.getItems()[1].getUri());
 
-                    ctx.send("search-3-name: " + trackPaging.getItems()[2].getName());
-                    ctx.send("search-3-artists: " + getArtists(trackPaging.getItems()[2].getArtists()));
-                    ctx.send("search-3-cover: " + trackPaging.getItems()[2].getAlbum().getImages()[0].getUrl());
+                        ctx.send("search-3-name: " + trackPaging.getItems()[2].getName());
+                        ctx.send("search-3-artists: " + getArtists(trackPaging.getItems()[2].getArtists()));
+                        ctx.send("search-3-cover: " + trackPaging.getItems()[2].getAlbum().getImages()[0].getUrl());
+                        ctx.send("search-3-uri: " + trackPaging.getItems()[2].getUri());
+
+                        userSearch.put(ctx.getSessionId(), message);
+                    } catch (Exception e1) {}
+
+                }
+                else if (ctx.message().contains("Song-Play")) {
+                    new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ", ""));
+                    System.out.println("Playing new song");
                 }
             });
         });
