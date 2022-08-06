@@ -7,18 +7,19 @@
     <title>Home - Brand</title>
     <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/Articles-Badges-images.css">
     <link rel="stylesheet" href="assets/css/untitled.css">
 </head>
 
-<body style="background: var(--bs-body-color);margin-bottom: -1081px;">
-    <nav class="navbar navbar-light navbar-expand bg-light navigation-clean">
+<body class="text-center" style="background: var(--bs-body-color);margin-bottom: -1081px;">
+    <nav class="navbar navbar-light navbar-expand bg-light navigation-clean" style="margin-top: 0px;">
         <div class="container"><a class="navbar-brand" href="#"><strong><span style="color: rgb(255, 255, 255);">Partykeller</span></strong></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"></button>
             <div class="collapse navbar-collapse" id="navcol-1" style="color: var(--bs-indigo);"><a class="btn btn-primary ms-auto" role="button" href="#" style="background: var(--bs-body-color);border-style: none;"><strong>Anmelden</strong></a></div>
             <header style="margin-left: 11px;color: var(--bs-indigo);background: var(--bs-indigo);"></header>
         </div>
     </nav>
-    <header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-bottom: 1px;">
-        <picture style="width: 275px;height: 275;"><img id="song-cover" style="width: 300px;height: 300px;margin-bottom: 19px;padding-top: 0px;margin-top: -22px;"></picture>
+    <header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-top: 0px;margin-bottom: 0px;">
+        <picture style="width: 275px;height: 275;"><img id="song-cover" style="width: 300px;height: 300px;margin-bottom: 19px;padding-top: 0px;margin-top: -75px;"></picture>
         <div class="container">
             <div class="row">
                 <div class="col-xl-9 mx-auto position-relative" style="margin-bottom: 4px;">
@@ -26,48 +27,106 @@
                     <h1 id="song-artists" class="mb-5" style="padding: 0px;padding-bottom: 0px;margin-bottom: 94px;height: 18.3906px;font-size: 25px;">Lade Künstler...</h1>
                 </div>
             </div>
-        </div><script>
- window.onload = setupWebSocket;
- let ws;
+        </div>
+    </header>
+    <div class="overlay" style="background: rgba(18,18,18,255);"></div><input class="border-0" type="search" id="searchbar" style="background: rgb(52, 58, 64);text-align: left;width: 375px;padding: 0;margin: 0;height: 33px;padding-right: 0px;margin-left: 0px;color: var(--bs-light);border: 1px solid var(--bs-body-color);border-radius: 1px;margin-bottom: 11px;" placeholder=" Nach Song suchen">
+    <div class="overlay" style="background: rgba(18,18,18,255);"></div>
+    <div class="container py-4 py-xl-5">
+        <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 450.016px;">
+            <div class="col" style="height: 265.328px;">
+                <div class="p-4" style="height: 80px;">
+                    <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-1-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                        <div>
+                            <p class="fw-bold mb-0" id="search-1-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="text-muted mb-0" id="search-1-artists" style="text-align: left;">Song-Artists</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4" style="height: 80px;">
+                    <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-2-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                        <div>
+                            <p class="fw-bold mb-0" id="search-2-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="text-muted mb-0" id="search-2-artists" style="text-align: left;">Song-Artists</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-3-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                        <div>
+                            <p class="fw-bold mb-0" id="search-3-name" style="color: var(--bs-blue);text-align: left;">Song-Name</p>
+                            <p class="text-muted mb-0" id="search-3-artists" style="text-align: left;">Song-Artists</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="showcase"></section><script>
+window.onload = setupWebSocket;
+let ws;
 
- function setupWebSocket() {
-     ws = new WebSocket("ws://" + location.hostname + "/main");
+function setupWebSocket() {
+    ws = new WebSocket("ws://" + location.hostname + "/main");
 
-     setInterval(refresh, 3000);
+    setInterval(refresh, 3000);
 
-     ws.onmessage = messageEvent => {
-         let wsinput = messageEvent.data;
-         if (wsinput.includes("Song-Name: ")) {
-             wsinput = wsinput.replace("Song-Name: ", "");
-             document.getElementById("song-name").innerHTML = wsinput;
-         }
-         else if (wsinput.includes("Song-Artists: ")) {
-             wsinput = wsinput.replace("Song-Artists: ", "");
-             document.getElementById("song-artists").innerHTML = wsinput;
-         } else if (wsinput.includes("Song-Cover: ")) {
-             wsinput = wsinput.replace("Song-Cover: ", "");
-             document.getElementById("song-cover").src = wsinput;
-             console.log("Link: " + wsinput);
-         } else if (wsinput.includes("not-playing")) {
-             document.getElementById("song-name").innerHTML = "Nothing playing";
-             document.getElementById("song-artists").innerHTML = "Nothing playing";
-         }
+    ws.onmessage = messageEvent => {
+        let wsinput = messageEvent.data;
+        if (wsinput.includes("Song-Name: ")) {
+            wsinput = wsinput.replace("Song-Name: ", "");
+            document.getElementById("song-name").innerHTML = wsinput;
+        }
+        else if (wsinput.includes("Song-Artists: ")) {
+            wsinput = wsinput.replace("Song-Artists: ", "");
+            document.getElementById("song-artists").innerHTML = wsinput;
+        } else if (wsinput.includes("Song-Cover: ")) {
+            wsinput = wsinput.replace("Song-Cover: ", "");
+            document.getElementById("song-cover").src = wsinput;
+            console.log("Link: " + wsinput);
+        } else if (wsinput.includes("not-playing")) {
+            document.getElementById("song-name").innerHTML = "Nothing playing";
+            document.getElementById("song-artists").innerHTML = "Nothing playing";
+        } else if (wsinput.includes("search-1-name")) {
+            document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
+        } else if (wsinput.includes("search-1-artists")) {
+            document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
+        } else if (wsinput.includes("search-1-cover")) {
+            document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
+        }
+        else if (wsinput.includes("search-2-name")) {
+            document.getElementById("search-2-name").innerHTML = wsinput.replace("search-2-name: ", "");
+        } else if (wsinput.includes("search-2-artists")) {
+            document.getElementById("search-2-artists").innerHTML = wsinput.replace("search-2-artists: ", "");
+        } else if (wsinput.includes("search-2-cover")) {
+            document.getElementById("search-2-cover").src = wsinput.replace("search-2-cover: ", "");
+        }
+        else if (wsinput.includes("search-3-name")) {
+            document.getElementById("search-3-name").innerHTML = wsinput.replace("search-3-name: ", "");
+        } else if (wsinput.includes("search-3-artists")) {
+            document.getElementById("search-3-artists").innerHTML = wsinput.replace("search-3-artists: ", "");
+        } else if (wsinput.includes("search-3-cover")) {
+            document.getElementById("search-3-cover").src = wsinput.replace("search-3-cover: ", "");
+        }
 
-     }
- }
- function refresh() {
-     ws.send("refresh");
- }
+    }
+
+}
+function refresh() {
+    ws.send("refresh");
+}
+const input = document.querySelector('#searchbar');
+
+input.addEventListener('change', updateValue);
+
+function updateValue() {
+    ws.send("Search: " + input.value);
+}
+
 
 </script>
 
 
 
-
-    </header>
-    <div class="overlay" style="background: rgba(18,18,18,255);"></div><input class="border rounded-0 border-1" type="search" style="background: rgb(52, 58, 64);border-style: none;text-align: left;width: 375px;padding: 0;margin: 0;height: 33px;padding-right: 0px;margin-left: 0px;" placeholder=" Nach Song suchen">
-    <div class="overlay" style="background: rgba(18,18,18,255);"></div>
-    <section class="showcase"></section>
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
 </body>
 

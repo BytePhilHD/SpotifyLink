@@ -8,6 +8,8 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import utils.ServerConfiguration;
 
@@ -77,7 +79,6 @@ public class Main {
             });
             ws.onMessage(ctx -> {
                 if (ctx.message().equalsIgnoreCase("refresh")) {
-                    Console.printout("Refresh received", MessageType.DEBUG);
                     try {
                         ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
                         ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
@@ -86,6 +87,25 @@ public class Main {
                     } catch (Exception e1) {
                         ctx.send("Not-playing");
                     }
+
+                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird
+                }
+                else if (ctx.message().contains("Search:")) {
+                    String message = ctx.message();
+                    System.out.println(message);
+
+                    Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
+                    ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
+                    ctx.send("search-1-artists: " + getArtists(trackPaging.getItems()[0].getArtists()));
+                    ctx.send("search-1-cover: " + trackPaging.getItems()[0].getAlbum().getImages()[0].getUrl());
+
+                    ctx.send("search-2-name: " + trackPaging.getItems()[1].getName());
+                    ctx.send("search-2-artists: " + getArtists(trackPaging.getItems()[1].getArtists()));
+                    ctx.send("search-2-cover: " + trackPaging.getItems()[1].getAlbum().getImages()[0].getUrl());
+
+                    ctx.send("search-3-name: " + trackPaging.getItems()[2].getName());
+                    ctx.send("search-3-artists: " + getArtists(trackPaging.getItems()[2].getArtists()));
+                    ctx.send("search-3-cover: " + trackPaging.getItems()[2].getAlbum().getImages()[0].getUrl());
                 }
             });
         });
@@ -114,9 +134,12 @@ public class Main {
         try {
             input = reader.readLine();
             System.out.println("You inputed: " + input);
-            String uri = SearchRequest.searchRequest(input);
-            System.out.println("URI: " + uri);
-            new SpotifyAPIConnector().addSongtoList(uri);
+            Paging<Track> trackPaging = SearchRequest.searchRequest(input);
+            System.out.println("Titel 1: " + trackPaging.getItems()[0].getName() + " - " + trackPaging.getItems()[0].getArtists()[0].getName());
+            System.out.println("Titel 2: " + trackPaging.getItems()[1].getName() + " - " + trackPaging.getItems()[1].getArtists()[0].getName());
+            System.out.println("Titel 3: " + trackPaging.getItems()[2].getName() + " - " + trackPaging.getItems()[2].getArtists()[0].getName());
+
+            //new SpotifyAPIConnector().addSongtoList(uri);
             reader();
         } catch (IOException e1) {
             System.out.println(e1.getMessage());
@@ -134,4 +157,24 @@ public class Main {
         }
         defaultConfStream.close();
     }
+
+    /*
+else if (wsinput.includes("search-1-name")) {
+             document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
+         } else if (wsinput.includes("search-1-artists")) {
+             document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
+         } else if (wsinput.includes("search-1-cover")) {
+             document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
+         }
+
+     }
+     const input = document.querySelector('#searchbar');
+     const log = document.getElementById('log');
+
+     input.addEventListener('change', updateValue);
+
+     function updateValue() {
+         ws.send("Search: " + input.value);
+     }
+     */
 }
