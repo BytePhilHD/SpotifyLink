@@ -130,8 +130,6 @@ public class Main {
                         return;
                     }
                     new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ", ""));
-
-                    // TODO send message to user that selected song is now in the queue
                 }
             });
         });

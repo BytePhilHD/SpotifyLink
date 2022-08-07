@@ -19,48 +19,51 @@
         <header style="margin-left: 11px;color: var(--bs-indigo);background: var(--bs-indigo);"></header>
     </div>
 </nav>
-<header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-top: 0px;margin-bottom: 0px;height: 574px;">
+<header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-top: 0px;margin-bottom: 0px;height: 593px;">
     <picture style="width: 275px;height: 275;"><img id="song-cover" style="width: 300px;height: 300px;margin-bottom: 19px;padding-top: 0px;margin-top: -75px;"></picture>
     <div class="container">
         <div class="row">
             <div class="col-xl-9 mx-auto position-relative" style="margin-bottom: 4px;">
-                <h1 id="song-name" class="mb-5" style="padding-bottom: 0px;margin-bottom: 94px;height: 50px;font-size: 29px;">Lade Song...</h1>
-                <h1 id="song-artists" class="mb-5" style="padding: 0px;padding-bottom: 0px;margin-bottom: 94px;height: 40px;font-size: 25px;">Lade Künstler...</h1>
+                <h1 id="song-name" class="mb-5" style="padding: 10px;padding-bottom: 0px;margin-bottom: 94px;height: 60px;font-size: 29px;">Lade Song...</h1>
+                <h1 id="song-artists" class="mb-5" style="padding-bottom: 0px;margin-bottom: 94px;height: 40px;font-size: 25px;">Lade Künstler...</h1>
             </div>
         </div>
     </div>
 </header>
-<div class="overlay" style="background: rgba(18,18,18,255);"></div><input class="border-0" type="search" id="searchbar" style="background: rgb(52, 58, 64);text-align: left;width: 375px;padding: 0;margin: 0;height: 33px;padding-right: 0px;margin-left: 0px;color: var(--bs-light);border: 1px solid var(--bs-body-color);border-radius: 1px;margin-bottom: 11px;" placeholder=" Nach Song suchen">
+<div class="overlay" style="background: rgba(18,18,18,255);"></div><input class="border-0" type="search" id="searchbar" style="background: rgb(52, 58, 64);text-align: left;width: 375px;padding: 0;margin: 0;height: 34px;padding-right: 0px;margin-left: 0px;color: var(--bs-light);border: 1px solid var(--bs-body-color);border-radius: 1px;margin-bottom: 11px;" placeholder=" Nach Song suchen">
 <div class="overlay" style="background: rgba(18,18,18,255);"></div>
 <div class="container py-4 py-xl-5" style="height: 579.013px;">
-    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 525.016px;">
+    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 602.016px;">
         <div class="col" style="height: 257.328px;">
-            <div class="p-4" style="height: 80px;">
+            <div class="p-4" style="height: 90px;">
                 <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-1-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                     <div>
                         <p class="fw-bold mb-0" id="search-1-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
-                        <p class="text-muted mb-0" id="search-1-artists" style="text-align: left;font-size: 14px;">Song-Artists</p>
+                        <p class="text-muted mb-0" id="search-1-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
                     </div><button class="btn btn-primary" id="search-1-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                 </div>
             </div>
-            <div class="p-4" style="height: 80px;">
+            <div class="p-4" style="height: 90px;">
                 <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-2-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                     <div>
                         <p class="fw-bold mb-0" id="search-2-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
-                        <p class="text-muted mb-0" id="search-2-artists" style="text-align: left;font-size: 14px;">Song-Artists</p>
+                        <p class="text-muted mb-0" id="search-2-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
                     </div><button class="btn btn-primary" id="search-2-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                 </div>
             </div>
-            <div class="p-4">
+            <div class="p-4" style="height: 93px;">
                 <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-3-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
                     <div>
                         <p class="fw-bold mb-0" id="search-3-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
-                        <p class="text-muted mb-0" id="search-3-artists" style="text-align: left;font-size: 14px;">Song-Artists</p>
+                        <p class="text-muted mb-0" id="search-3-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
                     </div><button class="btn btn-primary" id="search-3-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
                 </div>
             </div>
         </div>
-        <div class="col" style="height: 166.837px;">
+        <div class="col">
+            <p id="song-added" style="color: var(--bs-orange);font-size: 25px;height: 16.5px;font-weight: bold;"></p>
+        </div>
+        <div class="col" style="height: 197.837px;">
             <p style="color: rgb(212,218,223);font-size: 23px;">HILFE / INFO<br></p>
             <p style="color: #a4c7ed;font-size: 13px;">Oben siehst du den aktuell laufenden Song mit den zugehörigen Interpreten und dem Cover.&nbsp;<br>Bei der Suche kannst du nach einem Song suchen (Spotify) und den richtigen der drei Möglichkeiten mit dem Button "Wählen" in die Warteschlange packen.<br><br></p>
         </div>
@@ -79,11 +82,7 @@
     let uri2;
     let uri3;
 
-    function setupWebSocket() {
-        ws = new WebSocket("ws://" + location.hostname + "/main");
-
-        setInterval(refresh, 1000);
-
+    function hideSearch() {
         document.getElementById("search-1-button").style.visibility = "hidden";
         document.getElementById("search-1-name").style.visibility = "hidden";
         document.getElementById("search-1-artists").style.visibility = "hidden";
@@ -98,6 +97,14 @@
         document.getElementById("search-3-name").style.visibility = "hidden";
         document.getElementById("search-3-artists").style.visibility = "hidden";
         document.getElementById("search-3-cover").style.visibility = "hidden";
+    }
+
+    function setupWebSocket() {
+        ws = new WebSocket("ws://" + location.hostname + "/main");
+
+        setInterval(refresh, 1000);
+
+        hideSearch();
 
         ws.onmessage = messageEvent => {
             let wsinput = messageEvent.data;
@@ -124,6 +131,7 @@
             else if (wsinput.includes("search-1-name")) {
                 document.getElementById("search-1-name").style.visibility = "visible";
                 document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
+                document.getElementById("song-added").innerHTML = " ";
             } else if (wsinput.includes("search-1-artists")) {
                 document.getElementById("search-1-artists").style.visibility = "visible";
                 document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
@@ -162,20 +170,23 @@
             }
 
         }
-        ws.onclose = closeEvent => {
-            setupWebSocket();
-        }
 
     }
     // Buttons for selecting the right song
     document.getElementById('search-1-button').onclick = function() {
         ws.send("Song-Play: " + uri1);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
     }
     document.getElementById('search-2-button').onclick = function() {
         ws.send("Song-Play: " + uri2);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
     }
     document.getElementById('search-3-button').onclick = function() {
         ws.send("Song-Play: " + uri3);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
     }
 
     // refresh function which gets timed every 1000 ms (on the top)
