@@ -43,7 +43,7 @@ public class SpotifyAPIConnector {
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
-            System.out.println("Tokens set!");
+            Console.printout("Authentication successful!", MessageType.INFO);
             reader();
 
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
@@ -84,7 +84,7 @@ public class SpotifyAPIConnector {
     public void addSongtoList(String uri) {
         try {
             spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
-            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
+            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();  // TODO Remove automatic skip if finished with testing
         } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
         }

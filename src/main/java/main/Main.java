@@ -13,8 +13,10 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import utils.ServerConfiguration;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Array;
+import java.net.URI;
 import java.util.HashMap;
 
 public class Main {
@@ -29,8 +31,6 @@ public class Main {
     }
 
     public void startUP() throws IOException {
-        System.out.println("Spotify Artist Search. Please type in a Artist name");
-
         if (!new File("server.cfg").exists()) {
             final File newFile = new File("server.cfg");
             copyFile(newFile, "default.cfg");
@@ -47,7 +47,7 @@ public class Main {
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
 
-        reader();
+       // reader();
     }
 
     public void startApp() throws IOException {
@@ -59,11 +59,10 @@ public class Main {
 
         app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
-                System.out.println("Connection established.");
+                Console.printout("Authentication connected", MessageType.INFO);
             });
             ws.onMessage(ctx -> {
                 String message = ctx.message().replace("?", "").replace("code=", "");
-                System.out.println("Message received! " + message);
                 SpotifyAPIConnector.authorizationCode_Sync(message);
             });
         });
@@ -77,6 +76,7 @@ public class Main {
                     ctx.send("Song-Artists: " + getArtists(artists));
                     ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
                 } catch (Exception e1) {
+                    ctx.send("Not-playing");
                     Console.printout("Main websocket found no playing song", MessageType.ERROR);
                 }
             });
@@ -104,7 +104,6 @@ public class Main {
                     }
                     try {
                         String message = ctx.message();
-                        System.out.println(message);
 
                         Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
                         ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
@@ -127,8 +126,12 @@ public class Main {
 
                 }
                 else if (ctx.message().contains("Song-Play")) {
+                    if (ctx.message().replace("Song-Play: ", "").equalsIgnoreCase("undefined")) {
+                        return;
+                    }
                     new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ", ""));
-                    System.out.println("Playing new song");
+
+                    // TODO send message to user that selected song is now in the queue
                 }
             });
         });
@@ -143,31 +146,16 @@ public class Main {
             return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName();
         } else if (artists.length == 4) {
             return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName();
+        } else if (artists.length == 5) {
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName();
+        } else if (artists.length == 6) {
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName() + ", " + artists[5].getName();
         }
         else {
             return "ERROR";
         }
     }
 
-    public static void reader() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
-        System.out.println("READER");
-        String input = null;
-        try {
-            input = reader.readLine();
-            System.out.println("You inputed: " + input);
-            Paging<Track> trackPaging = SearchRequest.searchRequest(input);
-            System.out.println("Titel 1: " + trackPaging.getItems()[0].getName() + " - " + trackPaging.getItems()[0].getArtists()[0].getName());
-            System.out.println("Titel 2: " + trackPaging.getItems()[1].getName() + " - " + trackPaging.getItems()[1].getArtists()[0].getName());
-            System.out.println("Titel 3: " + trackPaging.getItems()[2].getName() + " - " + trackPaging.getItems()[2].getArtists()[0].getName());
-
-            //new SpotifyAPIConnector().addSongtoList(uri);
-            reader();
-        } catch (IOException e1) {
-            System.out.println(e1.getMessage());
-        }
-    }
 
     public void copyFile(File newFile, String existingFile) throws IOException {
         newFile.createNewFile();
@@ -200,4 +188,5 @@ else if (wsinput.includes("search-1-name")) {
          ws.send("Search: " + input.value);
      }
      */
+
 }

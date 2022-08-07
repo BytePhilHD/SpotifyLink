@@ -77,7 +77,12 @@ function setupWebSocket() {
        let wsinput = messageEvent.data;
        if (wsinput.includes("Song-Name: ")) {
            wsinput = wsinput.replace("Song-Name: ", "");
-           document.getElementById("song-name").innerHTML = wsinput;
+           if (wsinput === "null") {
+               document.getElementById("song-name").innerHTML = "Kein Song läuft";
+           } else {
+               document.getElementById("song-name").innerHTML = wsinput;
+           }
+
        }
        else if (wsinput.includes("Song-Artists: ")) {
            wsinput = wsinput.replace("Song-Artists: ", "");
@@ -86,10 +91,11 @@ function setupWebSocket() {
            wsinput = wsinput.replace("Song-Cover: ", "");
            document.getElementById("song-cover").src = wsinput;
            console.log("Link: " + wsinput);
-       } else if (wsinput.includes("not-playing")) {
-           document.getElementById("song-name").innerHTML = "Nothing playing";
-           document.getElementById("song-artists").innerHTML = "Nothing playing";
-       } else if (wsinput.includes("search-1-name")) {
+       } else if (wsinput.includes("Not-playing")) {
+           document.getElementById("song-name").innerHTML = "Kein Song läuft";
+           document.getElementById("song-artists").innerHTML = "...";
+       }
+       else if (wsinput.includes("search-1-name")) {
            document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
        } else if (wsinput.includes("search-1-artists")) {
            document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");

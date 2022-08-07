@@ -1,10 +1,14 @@
 package authorization;
 
+import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeUriRequest;
+import services.Console;
 
+import java.awt.*;
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +33,8 @@ public class AuthenticationURI {
     public static void authorizationCodeUri_Sync() {
         final URI uri = authorizationCodeUriRequest.execute();
 
-        System.out.println("Link to authenticate: " + uri.toString());
+        browser(uri.toString());
+        Console.printout("Link to authenticate: " + uri.toString(), MessageType.INFO);
     }
 
     public static void authorizationCodeUri_Async() {
@@ -52,5 +57,17 @@ public class AuthenticationURI {
     public static void main(String[] args) {
         authorizationCodeUri_Sync();
         authorizationCodeUri_Async();
+    }
+    public static void browser(String url) {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(URI.create(url));
+                }
+            }
+        } catch (IOException | InternalError e) {
+            e.printStackTrace();
+        }
     }
 }

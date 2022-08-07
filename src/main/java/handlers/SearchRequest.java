@@ -33,13 +33,7 @@ public class SearchRequest {
             // Set access token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(clientCredentials.getAccessToken());
 
-            final Paging<Track> trackPaging = spotifyApi.searchTracks(searchrequest).limit(5).build().execute();
-
-            // TODO mehrere Songs raussuchen und user auswählen lassen welcher der richtige ist
-
-            // TODO Idee: In html den input mit OnInputChangeEvent oder so machen und dann immer live Titel per Websocket senden
-
-            return trackPaging;
+            return spotifyApi.searchTracks(searchrequest).limit(5).build().execute();
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             System.out.println("Error: " + e.getMessage());
         }
