@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Brand</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/Articles-Badges-images.css">
+    <link rel="stylesheet" href="assets/css/Footer-Dark-icons.css">
+    <link rel="stylesheet" href="assets/css/untitled.css">
+</head>
+
+<body class="text-center" style="background: var(--bs-body-color);margin-bottom: -1081px;">
+<nav class="navbar navbar-light navbar-expand bg-light navigation-clean" style="margin-top: 0px;">
+    <div class="container"><a class="navbar-brand" href="#"><strong><span style="color: rgb(255, 255, 255);">Partykeller Music</span></strong></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"></button>
+        <div class="collapse navbar-collapse" id="navcol-1" style="color: var(--bs-indigo);"><a class="btn btn-primary ms-auto" role="button" href="/" style="background: var(--bs-body-color);border-style: none;"><strong>Hauptseite</strong></a></div>
+        <header style="margin-left: 11px;color: var(--bs-indigo);background: var(--bs-indigo);"></header>
+    </div>
+</nav>
+<div class="overlay" style="background: rgba(18,18,18,255);"></div>
+<div class="overlay" style="background: rgba(18,18,18,255);"></div>
+<div class="container py-4 py-xl-5" style="height: 579.013px;">
+    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 625.016px;">
+        <div class="col" style="height: 313.328px;">
+            <section class="position-relative py-4 py-xl-5">
+                <div class="container">
+                    <div class="row mb-5">
+                        <div class="col-md-8 col-xl-6 text-center mx-auto">
+                            <h2 style="color: var(--bs-gray-100);">Log in</h2>
+                            <p class="w-lg-50" style="color: var(--bs-gray-100);">Wenn du zu WhwH gehörst oder von Phil das Passwort erfahren hast, kannst du es hier eingeben.</p>
+                        </div>
+                    </div>
+                    <div class="row d-flex justify-content-center">
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card mb-5">
+                                <div class="card-body d-flex flex-column align-items-center" style="background: #343a40;">
+                                    <div class="bs-icon-xl bs-icon-circle bs-icon-primary bs-icon my-4"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="bi bi-person">
+                                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"></path>
+                                    </svg></div>
+                                    <form class="text-center" method="post" style="height: 118px;">
+                                        <div class="mb-3"></div>
+                                        <div class="mb-3"><input class="form-control" type="password" name="password" placeholder="Password"></div>
+                                        <div class="mb-3"><button class="btn btn-primary d-block w-100" type="submit" onclick="buttonHandler()">Login</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <footer class="text-center bg-dark" style="color: #343a40;background: var(--bs-pink);">
+        <div class="container text-white py-4 py-lg-5" style="background: #343a40;height: 113px;">
+            <p>Developed by&nbsp;<a href="https://bytephil.de" style="text-align: left;">BytePhil.de</a></p>
+            <p class="text-muted mb-0">Copyright © 2022 BytePhil.de</p>
+        </div>
+    </footer>
+</div>
+<section class="showcase"></section><script>
+    window.onload = setupWebSocket;
+    let ws;
+
+    function setupWebSocket() {
+        ws = new WebSocket("ws://" + location.hostname + "/main");
+        ws.onmessage = messageEvent => {
+            let wsinput = messageEvent.data;
+            if (wsinput.includes("Song-Name: ")) {
+                // PUT CODE
+            }
+        }
+
+    }
+
+    function buttonHandler() {
+
+    }
+
+
+</script>
+<script src="assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

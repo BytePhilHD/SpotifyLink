@@ -11,12 +11,15 @@ import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
+import services.LoginService;
 import utils.ServerConfiguration;
 
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 
 public class Main {
@@ -91,7 +94,8 @@ public class Main {
                         ctx.send("Not-playing");
                     }
 
-                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird
+                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird Hashmap mit Zeit und dem aktuellen Song
+                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify senden
                 }
                 else if (ctx.message().contains("Search:")) {
                     if (ctx.message().replace("Search: ", "").equalsIgnoreCase("")) {
@@ -133,6 +137,20 @@ public class Main {
                 }
             });
         });
+        app.ws("/login", ws -> {
+            ws.onConnect(ctx -> {
+            });
+            ws.onMessage(ctx -> {
+                if (LoginService.login(ctx.message(), ctx.getSessionId())) {
+                    ctx.send("CONFIRMED");
+                } else {
+                    ctx.send("DENIED");
+                }
+            });
+        });
+        app.get("/login", ctx -> {
+            ctx.render("/WebPages/login.html");
+        });
     }
 
     private String getArtists(ArtistSimplified[] artists) {
@@ -154,6 +172,9 @@ public class Main {
         }
     }
 
+    private static String getTime() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+    }
 
     public void copyFile(File newFile, String existingFile) throws IOException {
         newFile.createNewFile();
@@ -166,25 +187,4 @@ public class Main {
         }
         defaultConfStream.close();
     }
-
-    /*
-else if (wsinput.includes("search-1-name")) {
-             document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
-         } else if (wsinput.includes("search-1-artists")) {
-             document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
-         } else if (wsinput.includes("search-1-cover")) {
-             document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
-         }
-
-     }
-     const input = document.querySelector('#searchbar');
-     const log = document.getElementById('log');
-
-     input.addEventListener('change', updateValue);
-
-     function updateValue() {
-         ws.send("Search: " + input.value);
-     }
-     */
-
 }

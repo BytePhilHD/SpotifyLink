@@ -48,7 +48,7 @@ public class SpotifyAPIConnector {
 
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error at CodeExample: " + e.getMessage());
+            System.out.println("Error at SpotifyAPIConnector: " + e.getMessage());
         }
     }
 
@@ -84,7 +84,7 @@ public class SpotifyAPIConnector {
     public void addSongtoList(String uri) {
         try {
             spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
-            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();  // TODO Remove automatic skip if finished with testing
+            //spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
         } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
         }
