@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Brand</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic&amp;display=swap">
+    <link rel="stylesheet" href="assets/css/Articles-Badges-images.css">
+    <link rel="stylesheet" href="assets/css/Footer-Dark-icons.css">
+    <link rel="stylesheet" href="assets/css/untitled.css">
+</head>
+
+<body class="text-center" style="background: var(--bs-body-color);margin-bottom: -1081px;">
+<nav class="navbar navbar-light navbar-expand bg-light navigation-clean" style="margin-top: 0px;">
+    <div class="container"><a class="navbar-brand" href="#"><strong><span style="color: rgb(255, 255, 255);">Partykeller Music ADMIN</span></strong></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"></button>
+        <div class="collapse navbar-collapse" id="navcol-1" style="color: var(--bs-indigo);"><a class="btn btn-primary ms-auto" role="button" href="/" style="background: var(--bs-body-color);border-style: none;"><strong>Zurück</strong></a></div>
+        <header style="margin-left: 11px;color: var(--bs-indigo);background: var(--bs-indigo);"></header>
+    </div>
+</nav>
+<header class="text-center text-white masthead" style="background: var(--bs-body-color);padding-bottom: 0px;margin-top: 0px;margin-bottom: 0px;height: 593px;">
+    <picture style="width: 275px;height: 275;"><img id="song-cover" style="width: 300px;height: 300px;margin-bottom: 19px;padding-top: 0px;margin-top: -75px;"></picture>
+    <div class="btn-group" role="group"><button class="btn btn-primary" id="back-button" type="button">Back</button><button class="btn btn-primary" id="play-button" type="button">Pause/Play</button><button class="btn btn-primary" id="vorward-button" type="button">Vorward</button></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-9 mx-auto position-relative" style="margin-bottom: 4px;">
+                <h1 id="song-name" class="mb-5" style="padding: 10px;padding-bottom: 0px;margin-bottom: 94px;height: 60px;font-size: 29px;">Lade Song...</h1>
+                <h1 id="song-artists" class="mb-5" style="padding-bottom: 0px;margin-bottom: 94px;height: 40px;font-size: 25px;">Lade Künstler...</h1>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="overlay" style="background: rgba(18,18,18,255);"></div><input class="border-0" type="search" id="searchbar" style="background: rgb(52, 58, 64);text-align: left;width: 375px;padding: 0;margin: 0;height: 34px;padding-right: 0px;margin-left: 0px;color: var(--bs-light);border: 1px solid var(--bs-body-color);border-radius: 1px;margin-bottom: 11px;" placeholder=" Nach Song suchen">
+<div class="overlay" style="background: rgba(18,18,18,255);"></div>
+<div class="container py-4 py-xl-5" style="height: 579.013px;">
+    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 602.016px;">
+        <div class="col" style="height: 257.328px;">
+            <div class="p-4" style="height: 90px;">
+                <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-1-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                    <div>
+                        <p class="fw-bold mb-0" id="search-1-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
+                        <p class="text-muted mb-0" id="search-1-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
+                    </div><button class="btn btn-primary" id="search-1-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
+                </div>
+            </div>
+            <div class="p-4" style="height: 90px;">
+                <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-2-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                    <div>
+                        <p class="fw-bold mb-0" id="search-2-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
+                        <p class="text-muted mb-0" id="search-2-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
+                    </div><button class="btn btn-primary" id="search-2-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
+                </div>
+            </div>
+            <div class="p-4" style="height: 93px;">
+                <div class="d-flex"><img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="search-3-cover" width="50" height="50" src="https://cdn.bootstrapstudio.io/placeholders/1400x800.png">
+                    <div>
+                        <p class="fw-bold mb-0" id="search-3-name" style="color: var(--bs-blue);text-align: left;width: 175px;font-size: 15px;">Song-Name</p>
+                        <p class="text-muted mb-0" id="search-3-artists" style="text-align: left;font-size: 14px;width: 175px;">Song-Artists</p>
+                    </div><button class="btn btn-primary" id="search-3-button" type="button" style="text-align: left;height: 42px;">Wählen</button>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <p id="song-added" style="color: var(--bs-orange);font-size: 25px;height: 16.5px;font-weight: bold;"></p>
+        </div>
+        <div class="col" style="height: 197.837px;">
+            <p style="color: rgb(212,218,223);font-size: 23px;">HILFE / INFO<br></p>
+            <p style="color: #a4c7ed;font-size: 13px;">Oben siehst du den aktuell laufenden Song mit den zugehörigen Interpreten und dem Cover.&nbsp;<br>Bei der Suche kannst du nach einem Song suchen (Spotify) und den richtigen der drei Möglichkeiten mit dem Button "Wählen" in die Warteschlange packen.<br><br></p>
+        </div>
+    </div>
+    <footer class="text-center bg-dark" style="color: #343a40;background: var(--bs-pink);">
+        <div class="container text-white py-4 py-lg-5" style="background: #343a40;height: 113px;">
+            <p>Developed by&nbsp;<a href="https://bytephil.de" style="text-align: left;">BytePhil.de</a></p>
+            <p class="text-muted mb-0">Copyright © 2022 BytePhil.de</p>
+        </div>
+    </footer>
+</div>
+<section class="showcase"></section><script>
+    window.onload = setupWebSocket;
+    let ws;
+    let uri1;
+    let uri2;
+    let uri3;
+
+    function hideSearch() {
+        document.getElementById("search-1-button").style.visibility = "hidden";
+        document.getElementById("search-1-name").style.visibility = "hidden";
+        document.getElementById("search-1-artists").style.visibility = "hidden";
+        document.getElementById("search-1-cover").style.visibility = "hidden";
+
+        document.getElementById("search-2-button").style.visibility = "hidden";
+        document.getElementById("search-2-name").style.visibility = "hidden";
+        document.getElementById("search-2-artists").style.visibility = "hidden";
+        document.getElementById("search-2-cover").style.visibility = "hidden";
+
+        document.getElementById("search-3-button").style.visibility = "hidden";
+        document.getElementById("search-3-name").style.visibility = "hidden";
+        document.getElementById("search-3-artists").style.visibility = "hidden";
+        document.getElementById("search-3-cover").style.visibility = "hidden";
+    }
+
+    function setupWebSocket() {
+        ws = new WebSocket("ws://" + location.hostname + "/main");
+
+        setInterval(refresh, 1000);
+
+        hideSearch();
+
+        ws.onmessage = messageEvent => {
+            let wsinput = messageEvent.data;
+            if (wsinput.includes("Song-Name: ")) {
+                wsinput = wsinput.replace("Song-Name: ", "");
+                if (wsinput === "null") {
+                    document.getElementById("song-name").innerHTML = "Kein Song läuft";
+                } else {
+                    document.getElementById("song-name").innerHTML = wsinput;
+                }
+
+            }
+            else if (wsinput.includes("Song-Artists: ")) {
+                wsinput = wsinput.replace("Song-Artists: ", "");
+                document.getElementById("song-artists").innerHTML = wsinput;
+            } else if (wsinput.includes("Song-Cover: ")) {
+                wsinput = wsinput.replace("Song-Cover: ", "");
+                document.getElementById("song-cover").src = wsinput;
+                console.log("Link: " + wsinput);
+            } else if (wsinput.includes("Not-playing")) {
+                document.getElementById("song-name").innerHTML = "Kein Song läuft";
+                document.getElementById("song-artists").innerHTML = "...";
+            }
+            else if (wsinput.includes("search-1-name")) {
+                document.getElementById("search-1-name").style.visibility = "visible";
+                document.getElementById("search-1-name").innerHTML = wsinput.replace("search-1-name: ", "");
+                document.getElementById("song-added").innerHTML = " ";
+            } else if (wsinput.includes("search-1-artists")) {
+                document.getElementById("search-1-artists").style.visibility = "visible";
+                document.getElementById("search-1-artists").innerHTML = wsinput.replace("search-1-artists: ", "");
+            } else if (wsinput.includes("search-1-cover")) {
+                document.getElementById("search-1-cover").style.visibility = "visible";
+                document.getElementById("search-1-cover").src = wsinput.replace("search-1-cover: ", "");
+            } else if (wsinput.includes("search-1-uri")) {
+                document.getElementById("search-1-button").style.visibility = "visible";
+                uri1 = wsinput.replace("search-1-uri: ", "");
+            }
+            else if (wsinput.includes("search-2-name")) {
+                document.getElementById("search-2-name").style.visibility = "visible";
+                document.getElementById("search-2-name").innerHTML = wsinput.replace("search-2-name: ", "");
+            } else if (wsinput.includes("search-2-artists")) {
+                document.getElementById("search-2-artists").style.visibility = "visible";
+                document.getElementById("search-2-artists").innerHTML = wsinput.replace("search-2-artists: ", "");
+            } else if (wsinput.includes("search-2-cover")) {
+                document.getElementById("search-2-cover").style.visibility = "visible";
+                document.getElementById("search-2-cover").src = wsinput.replace("search-2-cover: ", "");
+            } else if (wsinput.includes("search-2-uri")) {
+                document.getElementById("search-2-button").style.visibility = "visible";
+                uri2 = wsinput.replace("search-2-uri: ", "");
+            }
+            else if (wsinput.includes("search-3-name")) {
+                document.getElementById("search-3-name").style.visibility = "visible";
+                document.getElementById("search-3-name").innerHTML = wsinput.replace("search-3-name: ", "");
+            } else if (wsinput.includes("search-3-artists")) {
+                document.getElementById("search-3-artists").style.visibility = "visible";
+                document.getElementById("search-3-artists").innerHTML = wsinput.replace("search-3-artists: ", "");
+            } else if (wsinput.includes("search-3-cover")) {
+                document.getElementById("search-3-cover").style.visibility = "visible";
+                document.getElementById("search-3-cover").src = wsinput.replace("search-3-cover: ", "");
+            } else if (wsinput.includes("search-3-uri")) {
+                document.getElementById("search-3-button").style.visibility = "visible";
+                uri3 = wsinput.replace("search-3-uri: ", "");
+            }
+
+        }
+
+    }
+    // Buttons for selecting the right song
+    document.getElementById('search-1-button').onclick = function() {
+        ws.send("Song-Play: " + uri1);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    }
+    document.getElementById('search-2-button').onclick = function() {
+        ws.send("Song-Play: " + uri2);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    }
+    document.getElementById('search-3-button').onclick = function() {
+        ws.send("Song-Play: " + uri3);
+        hideSearch();
+        document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    }
+
+    // refresh function which gets timed every 1000 ms (on the top)
+    function refresh() {
+        ws.send("refresh");
+        if (input.value != null) {
+            ws.send("Search: " + input.value);
+        }
+    }
+
+    // if input is entered, the value gets sent to the websocket
+    const input = document.querySelector('#searchbar');
+
+    input.addEventListener('change', updateValue);
+
+    function updateValue() {
+        ws.send("Search: " + input.value);
+    }
+
+    document.getElementById('back-button').onclick = function() {
+        ws.send("BACK");
+    }
+    document.getElementById('play-button').onclick = function() {
+        ws.send("PAUSE");
+    }
+    document.getElementById('vorward-button').onclick = function() {
+        ws.send("VORWARD");
+    }
+
+
+</script>
+<script src="assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
