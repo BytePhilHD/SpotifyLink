@@ -19,6 +19,7 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -27,6 +28,9 @@ public class Main {
     public static ServerConfiguration config;
 
     private HashMap<String, String> userSearch = new HashMap<>();
+    private static ArrayList<String> logtIn = new ArrayList<>();
+    private static HashMap<String, String> cookies = new HashMap<>();
+    private static HashMap<String, String> cookiesRenew = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
 
@@ -50,7 +54,7 @@ public class Main {
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
 
-       // reader();
+        // reader();
     }
 
     public void startApp() throws IOException {
@@ -84,7 +88,13 @@ public class Main {
                 }
             });
             ws.onMessage(ctx -> {
-                if (ctx.message().equalsIgnoreCase("refresh")) {
+                if (ctx.message().equals("BACK")) {
+                    new SpotifyAPIConnector().songBack();
+                } else if (ctx.message().equals("PAUSE")) {
+                    new SpotifyAPIConnector().playPauseSong();
+                } else if (ctx.message().equals("VORWARD")) {
+                    new SpotifyAPIConnector().songVorward();
+                } else if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
                         ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
                         ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
@@ -96,8 +106,7 @@ public class Main {
 
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird Hashmap mit Zeit und dem aktuellen Song
                     // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify senden
-                }
-                else if (ctx.message().contains("Search:")) {
+                } else if (ctx.message().contains("Search:")) {
                     if (ctx.message().replace("Search: ", "").equalsIgnoreCase("")) {
                         return;
                     }
@@ -126,10 +135,10 @@ public class Main {
                         ctx.send("search-3-uri: " + trackPaging.getItems()[2].getUri());
 
                         userSearch.put(ctx.getSessionId(), message);
-                    } catch (Exception e1) {}
+                    } catch (Exception e1) {
+                    }
 
-                }
-                else if (ctx.message().contains("Song-Play")) {
+                } else if (ctx.message().contains("Song-Play")) {
                     if (ctx.message().replace("Song-Play: ", "").equalsIgnoreCase("undefined")) {
                         return;
                     }
@@ -138,18 +147,42 @@ public class Main {
             });
         });
         app.ws("/login", ws -> {
-            ws.onConnect(ctx -> {
-            });
             ws.onMessage(ctx -> {
                 if (LoginService.login(ctx.message(), ctx.getSessionId())) {
-                    ctx.send("CONFIRMED");
+                    logtIn.add(ctx.getSessionId());
+                    ctx.send("CORRECT " + ctx.getSessionId());
+                    System.out.println("CORRECT PW");
                 } else {
-                    ctx.send("DENIED");
+                    ctx.send("WRONG");
+                    System.out.println("WRONG PW");
+                }
+            });
+        });
+        app.ws("/admin", ws -> {
+            ws.onMessage(ctx -> {
+                String message = ctx.message();
+                if (message.contains("LOGIN")) {
+                    message = message.replace("LOGIN", "").replace("?", "");
+
+                    if (logtIn.contains(message)) {
+                        logtIn.add(ctx.getSessionId());
+                        logtIn.remove(message);
+
+                        ctx.send("CONFIRMED");
+                        System.out.println("CONFIRMED LOGIN");
+                    } else {
+                        ctx.send("CLOSE");
+                        System.out.println("DENIED LOGIn");
+                    }
+
                 }
             });
         });
         app.get("/login", ctx -> {
             ctx.render("/WebPages/login.html");
+        });
+        app.get("/admin", ctx -> {
+            ctx.render("/WebPages/admin.html");
         });
     }
 
@@ -166,8 +199,7 @@ public class Main {
             return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName();
         } else if (artists.length == 6) {
             return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName() + ", " + artists[5].getName();
-        }
-        else {
+        } else {
             return "ERROR";
         }
     }

@@ -23,7 +23,7 @@
 <div class="overlay" style="background: rgba(18,18,18,255);"></div>
 <div class="container py-4 py-xl-5" style="height: 579.013px;">
     <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 625.016px;">
-        <div class="col" style="height: 313.328px;">
+        <div class="col-md-12" style="height: 313.328px;">
             <section class="position-relative py-4 py-xl-5">
                 <div class="container">
                     <div class="row mb-5">
@@ -41,8 +41,8 @@
                                     </svg></div>
                                     <form class="text-center" method="post" style="height: 118px;">
                                         <div class="mb-3"></div>
-                                        <div class="mb-3"><input class="form-control" type="password" name="password" placeholder="Password"></div>
-                                        <div class="mb-3"><button class="btn btn-primary d-block w-100" type="submit" onclick="buttonHandler()">Login</button></div>
+                                        <div class="mb-3"><input class="form-control" type="password" id="pw" name="password" placeholder="Password"></div>
+                                        <div class="mb-3"><button class="btn btn-primary d-block w-100" type="submit" onclick="manageInput()">Login</button></div>
                                     </form>
                                 </div>
                             </div>
@@ -63,18 +63,32 @@
     window.onload = setupWebSocket;
     let ws;
 
-    function setupWebSocket() {
-        ws = new WebSocket("ws://" + location.hostname + "/main");
-        ws.onmessage = messageEvent => {
-            let wsinput = messageEvent.data;
-            if (wsinput.includes("Song-Name: ")) {
-                // PUT CODE
-            }
+    var input = document.getElementById("pw");
+    input.addEventListener("keyup", function (event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            manageInput();
         }
+    });
 
+    function manageInput() {
+        let pw = document.getElementById("pw").value;
+        document.getElementById('pw').value = '';
+        ws.send("LOGIN: " + pw);
     }
 
-    function buttonHandler() {
+    function setupWebSocket() {
+        ws = new WebSocket("ws://" + location.hostname + "/login");
+        ws.onmessage = messageEvent => {
+            var wsinput = messageEvent.data;
+            if (wsinput.includes("CORRECT")) {
+                wsinput = wsinput.replace("CORRECT ", "");
+                window.location.href = location.protocol + "admin?" + wsinput;
+
+            } else if (wsinput.includes("WRONG")) {
+                window.location.href = location.protocol + "login?wrongpw"
+            }
+        }
 
     }
 

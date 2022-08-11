@@ -81,6 +81,27 @@ public class SpotifyAPIConnector {
         }
     }
 
+    public void songBack() {
+        try {
+            spotifyApi.skipUsersPlaybackToPreviousTrack().build().execute();
+        } catch (Exception e1) {}
+    }
+    public void playPauseSong() {
+        try {
+            spotifyApi.pauseUsersPlayback().build().execute();
+            return;
+        } catch (Exception e1) {}
+        try {
+            spotifyApi.startResumeUsersPlayback().build().execute();
+            return;
+        } catch (Exception e1) {}
+     }
+    public void songVorward() {
+        try {
+            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
+        } catch (Exception e1) {}
+    }
+
     public void addSongtoList(String uri) {
         try {
             spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
