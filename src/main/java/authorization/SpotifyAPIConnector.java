@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.security.spec.ECField;
 
 /*
 
@@ -80,7 +81,13 @@ public class SpotifyAPIConnector {
             throw new RuntimeException(e);
         }
     }
-
+    public String getURL() {
+        try {
+            return spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getUri();
+        } catch (Exception e1) {
+            return null;
+        }
+    }
     public void songBack() {
         try {
             spotifyApi.skipUsersPlaybackToPreviousTrack().build().execute();

@@ -78,6 +78,7 @@
 <section class="showcase"></section><script>
     window.onload = setupWebSocket;
     let ws;
+    let url;
     let uri1;
     let uri2;
     let uri3;
@@ -124,6 +125,8 @@
                 wsinput = wsinput.replace("Song-Cover: ", "");
                 document.getElementById("song-cover").src = wsinput;
                 console.log("Link: " + wsinput);
+            } else if (wsinput.includes("Song-Url: ")) {
+                url = wsinput.replace("Song-Url: ", "");
             } else if (wsinput.includes("Not-playing")) {
                 document.getElementById("song-name").innerHTML = "Kein Song läuft";
                 document.getElementById("song-artists").innerHTML = "...";
@@ -187,6 +190,9 @@
         ws.send("Song-Play: " + uri3);
         hideSearch();
         document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    }
+    document.getElementById('song-cover').onclick = function() {
+        location.href = url;
     }
 
     // refresh function which gets timed every 1000 ms (on the top)

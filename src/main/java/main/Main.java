@@ -29,8 +29,8 @@ public class Main {
 
     private HashMap<String, String> userSearch = new HashMap<>();
     private static ArrayList<String> logtIn = new ArrayList<>();
-    private static HashMap<String, String> cookies = new HashMap<>();
-    private static HashMap<String, String> cookiesRenew = new HashMap<>();
+    private static HashMap<String, SimpleDateFormat> currentSong = new HashMap<>();
+
 
     public static void main(String[] args) throws IOException {
 
@@ -82,6 +82,8 @@ public class Main {
                     ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
                     ctx.send("Song-Artists: " + getArtists(artists));
                     ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
+                    ctx.send("Song-Url: " + new SpotifyAPIConnector().getURL());
+
                 } catch (Exception e1) {
                     ctx.send("Not-playing");
                     Console.printout("Main websocket found no playing song", MessageType.ERROR);
@@ -169,10 +171,8 @@ public class Main {
                         logtIn.remove(message);
 
                         ctx.send("CONFIRMED");
-                        System.out.println("CONFIRMED LOGIN");
                     } else {
                         ctx.send("CLOSE");
-                        System.out.println("DENIED LOGIn");
                     }
 
                 }
