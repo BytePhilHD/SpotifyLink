@@ -29,8 +29,14 @@ public class Main {
 
     private HashMap<String, String> userSearch = new HashMap<>();
     private static ArrayList<String> logtIn = new ArrayList<>();
+    public ArrayList<String> blockedUsers = new ArrayList<>();
     private static HashMap<String, SimpleDateFormat> currentSong = new HashMap<>();
 
+    private static Main instance;
+
+    public static Main getInstance() {
+        return instance;
+    }
 
     public static void main(String[] args) throws IOException {
 
@@ -38,6 +44,8 @@ public class Main {
     }
 
     public void startUP() throws IOException {
+        instance = this;
+
         if (!new File("server.cfg").exists()) {
             final File newFile = new File("server.cfg");
             copyFile(newFile, "default.cfg");
@@ -54,7 +62,9 @@ public class Main {
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
 
-        // reader();
+        while (true) {
+            Console.reader();
+        }
     }
 
     public void startApp() throws IOException {
@@ -76,7 +86,11 @@ public class Main {
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
-                Console.printout("User connected to main websocket.", MessageType.INFO);
+                if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
+                    ctx.closeSession();
+                    return;
+                }
+                Console.printout("User connected to main websocket. (IP: " + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")", MessageType.INFO);
                 try {
                     ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
                     ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
@@ -86,10 +100,16 @@ public class Main {
 
                 } catch (Exception e1) {
                     ctx.send("Not-playing");
-                    Console.printout("Main websocket found no playing song", MessageType.ERROR);
                 }
             });
+            ws.onClose(ctx -> {
+                Console.printout("User disconnected from main websocket. (IP: " + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")", MessageType.INFO);
+            });
             ws.onMessage(ctx -> {
+                if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
+                    ctx.closeSession();
+                    return;
+                }
                 if (ctx.message().equals("BACK")) {
                     new SpotifyAPIConnector().songBack();
                 } else if (ctx.message().equals("PAUSE")) {
@@ -184,6 +204,7 @@ public class Main {
         app.get("/admin", ctx -> {
             ctx.render("/WebPages/admin.html");
         });
+
     }
 
     private String getArtists(ArtistSimplified[] artists) {
