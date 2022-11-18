@@ -57,6 +57,9 @@ public class Main {
             Console.printout("Config was successfully loaded!", MessageType.INFO);
         } else {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
+            Console.printout("", MessageType.INFO);
+            Console.printout(" It seems like you startet SpotifyLink for the first time. Please update your Spotify API Credentials in the config file!", MessageType.INFO);
+            Console.printout("", MessageType.INFO);
         }
 
         startApp();
