@@ -12,6 +12,7 @@ import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import services.LoginService;
+import utils.Config;
 import utils.ServerConfiguration;
 
 import java.awt.*;
@@ -176,10 +177,9 @@ public class Main {
                 if (LoginService.login(ctx.message(), ctx.getSessionId())) {
                     logtIn.add(ctx.getSessionId());
                     ctx.send("CORRECT " + ctx.getSessionId());
-                    System.out.println("CORRECT PW");
+                    Console.printout("User " + ctx.session.getRemoteAddress() + "logged into Admin account!", MessageType.INFO);
                 } else {
                     ctx.send("WRONG");
-                    System.out.println("WRONG PW");
                 }
             });
         });
