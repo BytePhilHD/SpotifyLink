@@ -88,8 +88,4 @@ public class SearchRequest {
         clientCredentials_Sync(searchRequest);
     }
 
-    public static void main(String[] args) {
-        clientCredentials_Sync("MArtin GArrix");
-        clientCredentials_Async();
-    }
 }
