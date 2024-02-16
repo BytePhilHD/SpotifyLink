@@ -102,7 +102,7 @@
     }
 
     function setupWebSocket() {
-        ws = new WebSocket("ws://" + location.hostname + "/main");
+        ws = new WebSocket("ws://" + location.hostname + ":" + location.port + "/main");
 
         setInterval(refresh, 2000);
 

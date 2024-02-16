@@ -30,6 +30,7 @@ public class ServerConfiguration extends Config {
         clientID= prop.getProperty("clientID", "yourClientID");
         clientSecret = prop.getProperty("clientSecret", "yourClientSecret");
 
+        webaddress = prop.getProperty("webaddress", "http://localhost/");
 
         port = Integer.parseInt(prop.getProperty("http.port", "80"));
         password = prop.getProperty("password", "YourPW!");

@@ -76,7 +76,7 @@ public class Main {
         Javalin app = Javalin.create(config -> {
             config.addStaticFiles("WebPages", Location.CLASSPATH);
             config.showJavalinBanner = false;
-        }).start(80);
+        }).start(config.port);
 
         app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
