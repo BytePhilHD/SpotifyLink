@@ -17,7 +17,7 @@
         if (location.port != 0) {
             i = location.port;
         }
-        ws = new WebSocket("ws://" + location.hostname + ":" + location.port + "/auth");
+        ws = new WebSocket("wss://" + location.hostname + ":" + location.port + "/auth");
 
         ws.onopen = openEvent => {
             console.log('INFO - Connection to Server established!');
