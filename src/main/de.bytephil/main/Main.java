@@ -35,6 +35,8 @@ public class Main {
 
     private static Main instance;
 
+    public static String refreshToken;
+
     public static Main getInstance() {
         return instance;
     }
