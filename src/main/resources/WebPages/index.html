@@ -167,8 +167,7 @@
                     document.getElementById("song-name").innerHTML = "Kein Song läuft";
                     document.getElementById("song-artists").innerHTML = "...";
                 }
-                if (document.querySelector('#searchbar') != sentValue) {
-
+                if (document.querySelector('#searchbar').value != sentValue) {
                     if (wsinput.hasOwnProperty("search-1")) {
                         let search1 = wsinput["search-1"];
                         document.getElementById("search-1-name").style.visibility = "visible";
@@ -214,19 +213,19 @@
             ws.send("Song-Play: " + uri1);
             hideSearch();
             document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-            sentValue = document.querySelector('#searchbar');
+            sentValue = document.querySelector('#searchbar').value;
         }
         document.getElementById('search-2-button').onclick = function () {
             ws.send("Song-Play: " + uri2);
             hideSearch();
             document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-            sentValue = document.querySelector('#searchbar');
+            sentValue = document.querySelector('#searchbar').value;
         }
         document.getElementById('search-3-button').onclick = function () {
             ws.send("Song-Play: " + uri3);
             hideSearch();
             document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-            sentValue = document.querySelector('#searchbar');
+            sentValue = document.querySelector('#searchbar').value;
         }
         document.getElementById('song-cover').onclick = function () {
             location.href = url;
