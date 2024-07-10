@@ -101,14 +101,17 @@ public class Main {
                                 + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
                         MessageType.INFO);
                 try {
-
                     JSONObject data = spotify.getCurrentTrackInfo();
-                    ctx.send(data.toString());
+                    if (data == null) {
+                        JSONObject songInfo = new JSONObject();
+                        songInfo.put("Not-playing", true);
+                        ctx.send(songInfo.toString());
+                    } else {
+                        ctx.send(data.toString());
+                    }
 
                 } catch (Exception e1) {
-                    JSONObject songInfo = new JSONObject();
-                    songInfo.put("Not-playing", true);
-                    ctx.send(songInfo.toString());
+                    Console.printout("Error occured when refreshing: " + e1.getMessage(), MessageType.ERROR);
                 }
             });
             ws.onClose(ctx -> {
