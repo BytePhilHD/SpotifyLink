@@ -28,7 +28,6 @@ public class Main {
     private HashMap<String, String> userSearch = new HashMap<>();
     private static ArrayList<String> logtIn = new ArrayList<>();
     public ArrayList<String> blockedUsers = new ArrayList<>();
-    private static HashMap<String, SimpleDateFormat> currentSong = new HashMap<>();
 
     private static Main instance;
 
