@@ -8,6 +8,10 @@
     <artifactId>SpotifyLink</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <build>
+         <sourceDirectory>src/main/de.bytephil/</sourceDirectory>
+    </build>
+
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
@@ -38,7 +42,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20200518</version>
+            <version>20231013</version>
         </dependency>
     </dependencies>
 
