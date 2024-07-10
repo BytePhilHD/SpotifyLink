@@ -64,11 +64,7 @@ public class Main {
         }
 
         startApp();
-        AuthenticationURI.authorizationCodeUri_Sync();
-
-        while (true) {
-            Console.reader();
-        }
+        AuthenticationURI.authorizationCodeUri_Sync();  
     }
 
     public void startApp() throws IOException {
