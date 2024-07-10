@@ -99,26 +99,29 @@ public class Main {
                         "User connected to main websocket. (IP: "
                                 + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
                         MessageType.INFO);
-                try {
-                    Console.printout("Trying to send", MessageType.INFO);
-                    SpotifyAPIConnector spotify = new SpotifyAPIConnector();
-                    String songName = spotify.readCurrentSong();
-                    ArtistSimplified[] artists = spotify.currentSongArtist();
-                    String songArtists = getArtists(artists);
-                    String songCover = spotify.getAlbumCover();
-                    String songUrl = spotify.getURL();
-
-                    JSONObject songInfo = new JSONObject();
-                    songInfo.put("Song-Name", songName);
-                    songInfo.put("Song-Artists", songArtists);
-                    songInfo.put("Song-Cover", songCover);
-                    songInfo.put("Song-Url", songUrl);
-
-                    ctx.send(songInfo.toString());
-
-                } catch (Exception e1) {
-                    ctx.send("Not-playing");
-                }
+                /*
+                 * try {
+                 * Console.printout("Trying to send", MessageType.INFO);
+                 * SpotifyAPIConnector spotify = new SpotifyAPIConnector();
+                 * String songName = spotify.readCurrentSong();
+                 * ArtistSimplified[] artists = spotify.currentSongArtist();
+                 * String songArtists = getArtists(artists);
+                 * String songCover = spotify.getAlbumCover();
+                 * String songUrl = spotify.getURL();
+                 * 
+                 * JSONObject songInfo = new JSONObject();
+                 * songInfo.put("Song-Name", songName);
+                 * songInfo.put("Song-Artists", songArtists);
+                 * songInfo.put("Song-Cover", songCover);
+                 * songInfo.put("Song-Url", songUrl);
+                 * 
+                 * ctx.send(songInfo.toString());
+                 * 
+                 * } catch (Exception e1) {
+                 * System.out.println(e1.getMessage());
+                 * ctx.send("Not-playing");
+                 * }
+                 */
             });
             ws.onClose(ctx -> {
                 Console.printout(
@@ -132,36 +135,56 @@ public class Main {
                     ctx.closeSession();
                     return;
                 }
-                if (ctx.message().equals("BACK")) {
-                    new SpotifyAPIConnector().songBack();
-                } else if (ctx.message().equals("PAUSE")) {
-                    new SpotifyAPIConnector().playPauseSong();
-                } else if (ctx.message().equals("VORWARD")) {
-                    new SpotifyAPIConnector().songVorward();
-                } else if (ctx.message().equalsIgnoreCase("refresh")) {
-                    try {
-                        Console.printout("Trying to send", MessageType.INFO);
-                        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
-                        String songName = spotify.readCurrentSong();
-                        ArtistSimplified[] artists = spotify.currentSongArtist();
-                        String songArtists = getArtists(artists);
-                        String songCover = spotify.getAlbumCover();
-                        String songUrl = spotify.getURL();
-    
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Song-Name", songName);
-                        songInfo.put("Song-Artists", songArtists);
-                        songInfo.put("Song-Cover", songCover);
-                        songInfo.put("Song-Url", songUrl);
-    
-                        ctx.send(songInfo.toString());
-                        Console.printout(songInfo.toString(), MessageType.INFO);
-                    } catch (Exception e1) {
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Not-playing", true);
-                        ctx.send(songInfo.toString());
-                    }
+                /*
+                 * if (ctx.message().equals("BACK")) {
+                 * new SpotifyAPIConnector().songBack();
+                 * } else if (ctx.message().equals("PAUSE")) {
+                 * new SpotifyAPIConnector().playPauseSong();
+                 * } else if (ctx.message().equals("VORWARD")) {
+                 * new SpotifyAPIConnector().songVorward();
+                 * }
+                 */
+                if (ctx.message().equalsIgnoreCase("refresh")) {
+                    Console.printout("Trying to send REFRESH", MessageType.INFO);
+                    SpotifyAPIConnector spotify = new SpotifyAPIConnector();
 
+                    Console.printout("About to call readCurrentSong", MessageType.INFO);
+                    String songName = spotify.readCurrentSong();
+
+                    Console.printout("About to call currentSongArtist", MessageType.INFO);
+                    //ArtistSimplified[] artists = spotify.currentSongArtist();
+
+                    Console.printout("About to call getArtists", MessageType.INFO);
+                    //String songArtists = getArtists(artists);
+
+                    Console.printout("About to call getAlbumCover", MessageType.INFO);
+                    String songCover = spotify.getAlbumCover();
+
+                    Console.printout("About to call getURL", MessageType.INFO);
+                    String songUrl = spotify.getURL();
+
+                    Console.printout("About to create JSONObject", MessageType.INFO);
+                    JSONObject songInfo = new JSONObject();
+                    songInfo.put("Song-Name", songName);
+                    //songInfo.put("Song-Artists", songArtists);
+                    songInfo.put("Song-Cover", songCover);
+                    songInfo.put("Song-Url", songUrl);
+
+                    Console.printout("About to send JSONObject", MessageType.INFO);
+                    ctx.send(songInfo.toString());
+
+                    Console.printout(songInfo.toString(), MessageType.INFO);
+
+                    /*
+                     * try {
+                     * 
+                     * } catch (Exception e1) {
+                     * System.out.println(e1.getMessage());
+                     * JSONObject songInfo = new JSONObject();
+                     * songInfo.put("Not-playing", true);
+                     * ctx.send(songInfo.toString());
+                     * }
+                     */
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
                     // wird Hashmap mit Zeit und dem aktuellen Song
                     // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
@@ -206,7 +229,9 @@ public class Main {
                 }
             });
         });
-        app.ws("/login", ws -> {
+        app.ws("/login", ws ->
+
+        {
             ws.onMessage(ctx -> {
                 if (LoginService.login(ctx.message(), ctx.getSessionId())) {
                     logtIn.add(ctx.getSessionId());

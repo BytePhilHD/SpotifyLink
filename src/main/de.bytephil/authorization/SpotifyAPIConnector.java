@@ -7,7 +7,6 @@ import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRefreshRequest;
 import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import org.apache.hc.core5.http.ParseException;
 import services.Console;
@@ -17,16 +16,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.security.spec.ECField;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 /*
 
         API from https://github.com/spotify-web-api-java
  */
 
-// TODO Admin Session Fixen (Aktuell kann man einfach irgend eine
 public class SpotifyAPIConnector {
     private static final String clientId = Main.config.clientID;
     private static final String clientSecret = Main.config.clientSecret;
@@ -39,9 +34,6 @@ public class SpotifyAPIConnector {
             .setRedirectUri(redirectUri)
             .build();
     private static final AuthorizationCodeRequest authorizationCodeRequest = spotifyApi.authorizationCode(code)
-            .build();
-
-    private static final AuthorizationCodeRefreshRequest authorizationCodeRefreshRequest = spotifyApi.authorizationCodeRefresh()
             .build();
 
     public static void authorizationCode_Sync(String code1) {
@@ -58,25 +50,7 @@ public class SpotifyAPIConnector {
 
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            authorizationCodeRefresh_Async();
             System.out.println("Error at SpotifyAPIConnector: " + e.getMessage());
-        }
-    }
-
-    public static void authorizationCodeRefresh_Async() {
-        try {
-            final CompletableFuture<AuthorizationCodeCredentials> authorizationCodeCredentialsFuture = authorizationCodeRefreshRequest.executeAsync();
-
-            final AuthorizationCodeCredentials authorizationCodeCredentials = authorizationCodeCredentialsFuture.join();
-
-            // Set access token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-
-            System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
-        } catch (CompletionException e) {
-            System.out.println("Error: " + e.getCause().getMessage());
-        } catch (CancellationException e) {
-            System.out.println("Async operation cancelled.");
         }
     }
 
@@ -166,9 +140,12 @@ public class SpotifyAPIConnector {
         try {
             String id = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem().getId();
             return spotifyApi.getTrack(id).build().execute().getArtists();
-        } catch (Exception e1) {}
-
+        } catch (Exception e1) {
+            Console.printout("Error in currentSongArtist: " + e1.getMessage(), MessageType.INFO);
+        }
+    
         return null;
     }
+    
 
 }
