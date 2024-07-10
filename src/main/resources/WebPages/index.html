@@ -145,21 +145,26 @@
             ws.onmessage = messageEvent => {
                 let wsinput = JSON.parse(messageEvent.data);
 
-                if (wsinput["name"] === "null") {
-                    document.getElementById("song-name").innerHTML = "Kein Song läuft";
-                } else {
+                if (wsinput["name"] !== undefined) {
                     document.getElementById("song-name").innerHTML = wsinput["name"];
                 }
 
-                document.getElementById("song-artists").innerHTML = wsinput["artists"];
-                document.getElementById("song-cover").src = wsinput["cover"];
-                url = wsinput["uri"];
+                if (wsinput["artists"] !== undefined) {
+                    document.getElementById("song-artists").innerHTML = wsinput["artists"];
+                }
+
+                if (wsinput["cover"] !== undefined) {
+                    document.getElementById("song-cover").src = wsinput["cover"];
+                }
+
+                if (wsinput["uri"] !== undefined) {
+                    url = wsinput["uri"];
+                }
 
                 if (wsinput["Not-playing"]) {
                     document.getElementById("song-name").innerHTML = "Kein Song läuft";
                     document.getElementById("song-artists").innerHTML = "...";
                 }
-
 
                 if (wsinput.hasOwnProperty("search-1")) {
                     let search1 = wsinput["search-1"];
@@ -195,10 +200,7 @@
                     document.getElementById("search-3-button").style.visibility = "visible";
                     uri3 = search3["uri"];
                 }
-
-
             }
-
         }
         // Buttons for selecting the right song
         document.getElementById('search-1-button').onclick = function () {
@@ -224,18 +226,19 @@
         function refresh() {
             console.log("DEBUG: Refresh")
             ws.send("refresh");
-            if (input.value != null) {
+            if (input.value !== null && input.value !== "") {
                 ws.send("Search: " + input.value);
             }
         }
 
-        // if input is entered, the value gets sent to the websocket
         const input = document.querySelector('#searchbar');
 
         input.addEventListener('change', updateValue);
 
         function updateValue() {
-            ws.send("Search: " + input.value);
+            if (input.value !== null && input.value !== "") {
+                ws.send("Search: " + input.value);
+            }
         }
 
 

@@ -88,6 +88,7 @@ public class Main {
                 SpotifyAPIConnector.authorizationCode_Sync(message);
             });
         });
+        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
@@ -99,29 +100,16 @@ public class Main {
                         "User connected to main websocket. (IP: "
                                 + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
                         MessageType.INFO);
-                /*
-                 * try {
-                 * Console.printout("Trying to send", MessageType.INFO);
-                 * SpotifyAPIConnector spotify = new SpotifyAPIConnector();
-                 * String songName = spotify.readCurrentSong();
-                 * ArtistSimplified[] artists = spotify.currentSongArtist();
-                 * String songArtists = getArtists(artists);
-                 * String songCover = spotify.getAlbumCover();
-                 * String songUrl = spotify.getURL();
-                 * 
-                 * JSONObject songInfo = new JSONObject();
-                 * songInfo.put("Song-Name", songName);
-                 * songInfo.put("Song-Artists", songArtists);
-                 * songInfo.put("Song-Cover", songCover);
-                 * songInfo.put("Song-Url", songUrl);
-                 * 
-                 * ctx.send(songInfo.toString());
-                 * 
-                 * } catch (Exception e1) {
-                 * System.out.println(e1.getMessage());
-                 * ctx.send("Not-playing");
-                 * }
-                 */
+                try {
+
+                    JSONObject data = spotify.getCurrentTrackInfo();
+                    ctx.send(data.toString());
+
+                } catch (Exception e1) {
+                    JSONObject songInfo = new JSONObject();
+                    songInfo.put("Not-playing", true);
+                    ctx.send(songInfo.toString());
+                }
             });
             ws.onClose(ctx -> {
                 Console.printout(
@@ -145,27 +133,11 @@ public class Main {
                  */
                 if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
-                        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
-                        /* 
-                        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
-                        String songName = spotify.readCurrentSong();
-                        ArtistSimplified[] artists = spotify.currentSongArtist();
-                        String songArtists = getArtists(artists);
-                        String songCover = spotify.getAlbumCover();
-                        String songUrl = spotify.getURL();
 
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Song-Name", songName);
-                        songInfo.put("Song-Artists", songArtists);
-                        songInfo.put("Song-Cover", songCover);
-                        songInfo.put("Song-Url", songUrl);
-                        */
                         JSONObject data = spotify.getCurrentTrackInfo();
                         ctx.send(data.toString());
-                        Console.printout(data.toString(), MessageType.INFO);
 
                     } catch (Exception e1) {
-                        System.out.println(e1.getMessage());
                         JSONObject songInfo = new JSONObject();
                         songInfo.put("Not-playing", true);
                         ctx.send(songInfo.toString());
@@ -201,11 +173,12 @@ public class Main {
                     } catch (Exception e1) {
                     }
                 } else if (ctx.message().contains("Song-Play")) {
-                    if (ctx.message().replace("Song-Play: ", "").equalsIgnoreCase("undefined")) {
+                    String url = ctx.message().replace("Song-Play: ", "");
+                    if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    // new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ",
-                    // ""));
+                    new SpotifyAPIConnector().addSongtoList(url);
+
                 }
             });
         });

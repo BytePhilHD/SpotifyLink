@@ -65,6 +65,16 @@ public class SpotifyAPIConnector {
         } 
     }
 
+    public void addSongtoList(String uri) {
+        try {
+            spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
+        } catch (Exception e1) {
+            Console.printout(e1.getMessage(), MessageType.ERROR);
+        }
+
+    }
+
+
     public String getURL() {
         try {
             return getCurrentTrackItem().getUri();
