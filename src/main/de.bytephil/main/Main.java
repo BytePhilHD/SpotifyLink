@@ -130,7 +130,6 @@ public class Main {
                         MessageType.INFO);
             });
             ws.onMessage(ctx -> {
-                Console.printout("Received ", MessageType.INFO);
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
@@ -145,52 +144,40 @@ public class Main {
                  * }
                  */
                 if (ctx.message().equalsIgnoreCase("refresh")) {
-                    Console.printout("Trying to send REFRESH", MessageType.INFO);
-                    SpotifyAPIConnector spotify = new SpotifyAPIConnector();
+                    try {
+                        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
+                        /* 
+                        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
+                        String songName = spotify.readCurrentSong();
+                        ArtistSimplified[] artists = spotify.currentSongArtist();
+                        String songArtists = getArtists(artists);
+                        String songCover = spotify.getAlbumCover();
+                        String songUrl = spotify.getURL();
 
-                    Console.printout("About to call readCurrentSong", MessageType.INFO);
-                    String songName = spotify.readCurrentSong();
+                        JSONObject songInfo = new JSONObject();
+                        songInfo.put("Song-Name", songName);
+                        songInfo.put("Song-Artists", songArtists);
+                        songInfo.put("Song-Cover", songCover);
+                        songInfo.put("Song-Url", songUrl);
+                        */
+                        JSONObject data = spotify.getCurrentTrackInfo();
+                        ctx.send(data.toString());
+                        Console.printout(data.toString(), MessageType.INFO);
 
-                    Console.printout("About to call currentSongArtist", MessageType.INFO);
-                    //ArtistSimplified[] artists = spotify.currentSongArtist();
+                    } catch (Exception e1) {
+                        System.out.println(e1.getMessage());
+                        JSONObject songInfo = new JSONObject();
+                        songInfo.put("Not-playing", true);
+                        ctx.send(songInfo.toString());
+                    }
 
-                    Console.printout("About to call getArtists", MessageType.INFO);
-                    //String songArtists = getArtists(artists);
-
-                    Console.printout("About to call getAlbumCover", MessageType.INFO);
-                    String songCover = spotify.getAlbumCover();
-
-                    Console.printout("About to call getURL", MessageType.INFO);
-                    String songUrl = spotify.getURL();
-
-                    Console.printout("About to create JSONObject", MessageType.INFO);
-                    JSONObject songInfo = new JSONObject();
-                    songInfo.put("Song-Name", songName);
-                    //songInfo.put("Song-Artists", songArtists);
-                    songInfo.put("Song-Cover", songCover);
-                    songInfo.put("Song-Url", songUrl);
-
-                    Console.printout("About to send JSONObject", MessageType.INFO);
-                    ctx.send(songInfo.toString());
-
-                    Console.printout(songInfo.toString(), MessageType.INFO);
-
-                    /*
-                     * try {
-                     * 
-                     * } catch (Exception e1) {
-                     * System.out.println(e1.getMessage());
-                     * JSONObject songInfo = new JSONObject();
-                     * songInfo.put("Not-playing", true);
-                     * ctx.send(songInfo.toString());
-                     * }
-                     */
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
                     // wird Hashmap mit Zeit und dem aktuellen Song
                     // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
                     // senden
                 } else if (ctx.message().contains("Search:")) {
-                    if (ctx.message().replace("Search: ", "").equalsIgnoreCase("")) {
+                    String searchQuery = ctx.message().replace("Search: ", "");
+                    if (searchQuery.equalsIgnoreCase("")) {
                         return;
                     }
                     if (userSearch.containsKey(ctx.getSessionId())) {
@@ -199,36 +186,30 @@ public class Main {
                         }
                     }
                     try {
-                        String message = ctx.message();
-
-                        Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
-                        ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
-                        ctx.send("search-1-artists: " + getArtists(trackPaging.getItems()[0].getArtists()));
-                        ctx.send("search-1-cover: " + trackPaging.getItems()[0].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-1-uri: " + trackPaging.getItems()[0].getUri());
-
-                        ctx.send("search-2-name: " + trackPaging.getItems()[1].getName());
-                        ctx.send("search-2-artists: " + getArtists(trackPaging.getItems()[1].getArtists()));
-                        ctx.send("search-2-cover: " + trackPaging.getItems()[1].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-2-uri: " + trackPaging.getItems()[1].getUri());
-
-                        ctx.send("search-3-name: " + trackPaging.getItems()[2].getName());
-                        ctx.send("search-3-artists: " + getArtists(trackPaging.getItems()[2].getArtists()));
-                        ctx.send("search-3-cover: " + trackPaging.getItems()[2].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-3-uri: " + trackPaging.getItems()[2].getUri());
-
-                        userSearch.put(ctx.getSessionId(), message);
+                        Paging<Track> trackPaging = SearchRequest.searchRequest(searchQuery);
+                        JSONObject searchResults = new JSONObject();
+                        for (int i = 0; i < 3; i++) {
+                            JSONObject trackInfo = new JSONObject();
+                            trackInfo.put("name", trackPaging.getItems()[i].getName());
+                            trackInfo.put("artists", getArtists(trackPaging.getItems()[i].getArtists()));
+                            trackInfo.put("cover", trackPaging.getItems()[i].getAlbum().getImages()[0].getUrl());
+                            trackInfo.put("uri", trackPaging.getItems()[i].getUri());
+                            searchResults.put("search-" + (i + 1), trackInfo);
+                        }
+                        ctx.send(searchResults.toString());
+                        userSearch.put(ctx.getSessionId(), ctx.message());
                     } catch (Exception e1) {
                     }
-
                 } else if (ctx.message().contains("Song-Play")) {
                     if (ctx.message().replace("Song-Play: ", "").equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ", ""));
+                    // new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ",
+                    // ""));
                 }
             });
         });
+
         app.ws("/login", ws ->
 
         {
