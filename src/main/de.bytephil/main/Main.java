@@ -6,23 +6,20 @@ import handlers.SearchRequest;
 import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import services.LoginService;
-import utils.Config;
 import utils.ServerConfiguration;
 
-import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Array;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+
+import org.json.JSONObject;
 
 public class Main {
 
@@ -61,7 +58,9 @@ public class Main {
         } else {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
             Console.printout("", MessageType.INFO);
-            Console.printout(" It seems like you startet SpotifyLink for the first time. Please update your Spotify API Credentials in the config file!", MessageType.INFO);
+            Console.printout(
+                    " It seems like you startet SpotifyLink for the first time. Please update your Spotify API Credentials in the config file!",
+                    MessageType.INFO);
             Console.printout("", MessageType.INFO);
         }
 
@@ -89,6 +88,7 @@ public class Main {
                 SpotifyAPIConnector.authorizationCode_Sync(message);
             });
         });
+        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
@@ -96,46 +96,60 @@ public class Main {
                     ctx.closeSession();
                     return;
                 }
-                Console.printout("User connected to main websocket. (IP: " + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")", MessageType.INFO);
+                Console.printout(
+                        "User connected to main websocket. (IP: "
+                                + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
+                        MessageType.INFO);
                 try {
-                    ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
-                    ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
-                    ctx.send("Song-Artists: " + getArtists(artists));
-                    ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
-                    ctx.send("Song-Url: " + new SpotifyAPIConnector().getURL());
+
+                    JSONObject data = spotify.getCurrentTrackInfo();
+                    ctx.send(data.toString());
 
                 } catch (Exception e1) {
-                    ctx.send("Not-playing");
+                    JSONObject songInfo = new JSONObject();
+                    songInfo.put("Not-playing", true);
+                    ctx.send(songInfo.toString());
                 }
             });
             ws.onClose(ctx -> {
-                Console.printout("User disconnected from main websocket. (IP: " + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")", MessageType.INFO);
+                Console.printout(
+                        "User disconnected from main websocket. (IP: "
+                                + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
+                        MessageType.INFO);
             });
             ws.onMessage(ctx -> {
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
                 }
-                if (ctx.message().equals("BACK")) {
-                    new SpotifyAPIConnector().songBack();
-                } else if (ctx.message().equals("PAUSE")) {
-                    new SpotifyAPIConnector().playPauseSong();
-                } else if (ctx.message().equals("VORWARD")) {
-                    new SpotifyAPIConnector().songVorward();
-                } else if (ctx.message().equalsIgnoreCase("refresh")) {
+                /*
+                 * if (ctx.message().equals("BACK")) {
+                 * new SpotifyAPIConnector().songBack();
+                 * } else if (ctx.message().equals("PAUSE")) {
+                 * new SpotifyAPIConnector().playPauseSong();
+                 * } else if (ctx.message().equals("VORWARD")) {
+                 * new SpotifyAPIConnector().songVorward();
+                 * }
+                 */
+                if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
-                        ctx.send("Song-Name: " + new SpotifyAPIConnector().readCurrentSong());
-                        ArtistSimplified[] artists = new SpotifyAPIConnector().currentSongArtist();
-                        ctx.send("Song-Artists: " + getArtists(artists));
-                        ctx.send("Song-Cover: " + new SpotifyAPIConnector().getAlbumCover());
+
+                        JSONObject data = spotify.getCurrentTrackInfo();
+                        ctx.send(data.toString());
+
                     } catch (Exception e1) {
-                        ctx.send("Not-playing");
+                        JSONObject songInfo = new JSONObject();
+                        songInfo.put("Not-playing", true);
+                        ctx.send(songInfo.toString());
                     }
 
-                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht wird Hashmap mit Zeit und dem aktuellen Song
-                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify senden
+                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
+                    // wird Hashmap mit Zeit und dem aktuellen Song
+                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
+                    // senden
                 } else if (ctx.message().contains("Search:")) {
-                    if (ctx.message().replace("Search: ", "").equalsIgnoreCase("")) {
+                    String searchQuery = ctx.message().replace("Search: ", "");
+                    if (searchQuery.equalsIgnoreCase("")) {
                         return;
                     }
                     if (userSearch.containsKey(ctx.getSessionId())) {
@@ -144,42 +158,40 @@ public class Main {
                         }
                     }
                     try {
-                        String message = ctx.message();
-
-                        Paging<Track> trackPaging = SearchRequest.searchRequest(message.replace("Search: ", ""));
-                        ctx.send("search-1-name: " + trackPaging.getItems()[0].getName());
-                        ctx.send("search-1-artists: " + getArtists(trackPaging.getItems()[0].getArtists()));
-                        ctx.send("search-1-cover: " + trackPaging.getItems()[0].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-1-uri: " + trackPaging.getItems()[0].getUri());
-
-                        ctx.send("search-2-name: " + trackPaging.getItems()[1].getName());
-                        ctx.send("search-2-artists: " + getArtists(trackPaging.getItems()[1].getArtists()));
-                        ctx.send("search-2-cover: " + trackPaging.getItems()[1].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-2-uri: " + trackPaging.getItems()[1].getUri());
-
-                        ctx.send("search-3-name: " + trackPaging.getItems()[2].getName());
-                        ctx.send("search-3-artists: " + getArtists(trackPaging.getItems()[2].getArtists()));
-                        ctx.send("search-3-cover: " + trackPaging.getItems()[2].getAlbum().getImages()[0].getUrl());
-                        ctx.send("search-3-uri: " + trackPaging.getItems()[2].getUri());
-
-                        userSearch.put(ctx.getSessionId(), message);
+                        Paging<Track> trackPaging = SearchRequest.searchRequest(searchQuery);
+                        JSONObject searchResults = new JSONObject();
+                        for (int i = 0; i < 3; i++) {
+                            JSONObject trackInfo = new JSONObject();
+                            trackInfo.put("name", trackPaging.getItems()[i].getName());
+                            trackInfo.put("artists", getArtists(trackPaging.getItems()[i].getArtists()));
+                            trackInfo.put("cover", trackPaging.getItems()[i].getAlbum().getImages()[0].getUrl());
+                            trackInfo.put("uri", trackPaging.getItems()[i].getUri());
+                            searchResults.put("search-" + (i + 1), trackInfo);
+                        }
+                        ctx.send(searchResults.toString());
+                        userSearch.put(ctx.getSessionId(), ctx.message());
                     } catch (Exception e1) {
                     }
-
                 } else if (ctx.message().contains("Song-Play")) {
-                    if (ctx.message().replace("Song-Play: ", "").equalsIgnoreCase("undefined")) {
+                    String url = ctx.message().replace("Song-Play: ", "");
+                    if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    new SpotifyAPIConnector().addSongtoList(ctx.message().replace("Song-Play: ", ""));
+                    new SpotifyAPIConnector().addSongtoList(url);
+
                 }
             });
         });
-        app.ws("/login", ws -> {
+
+        app.ws("/login", ws ->
+
+        {
             ws.onMessage(ctx -> {
                 if (LoginService.login(ctx.message(), ctx.getSessionId())) {
                     logtIn.add(ctx.getSessionId());
                     ctx.send("CORRECT " + ctx.getSessionId());
-                    Console.printout("User " + ctx.session.getRemoteAddress() + "logged into Admin account!", MessageType.INFO);
+                    Console.printout("User " + ctx.session.getRemoteAddress() + "logged into Admin account!",
+                            MessageType.INFO);
                 } else {
                     ctx.send("WRONG");
                 }
@@ -220,11 +232,14 @@ public class Main {
         } else if (artists.length == 3) {
             return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName();
         } else if (artists.length == 4) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName();
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
+                    + artists[3].getName();
         } else if (artists.length == 5) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName();
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
+                    + artists[3].getName() + ", " + artists[4].getName();
         } else if (artists.length == 6) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", " + artists[3].getName() + ", " + artists[4].getName() + ", " + artists[5].getName();
+            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
+                    + artists[3].getName() + ", " + artists[4].getName() + ", " + artists[5].getName();
         } else {
             return "ERROR";
         }
