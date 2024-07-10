@@ -9,7 +9,6 @@ import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
-import se.michaelthelin.spotify.requests.authorization.authorization_code.AuthorizationCodeRequest;
 import org.apache.hc.core5.http.ParseException;
 import org.json.JSONObject;
 
@@ -41,20 +40,38 @@ public class SpotifyAPIConnector {
     public static void authorizationCode_Sync(String code1) {
         try {
             final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCode(code1).build().execute();
-
+    
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-
+    
             Console.printout("Authentication successful!", MessageType.INFO);
             Console.printout(authorizationCodeCredentials.getAccessToken(), MessageType.INFO);
             reader();
-
+    
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            Console.printout("Error at SpotifyAPIConnector: " + e.getMessage(), MessageType.ERROR);
+            if (e.getMessage().contains("Authorization code expired")) {
+                refreshToken();
+            } else {
+                Console.printout("Error at SpotifyAPIConnector: " + e.getMessage(), MessageType.ERROR);
+            }
         }
     }
+    
+    public static void refreshToken() {
+        try {
+            final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCodeRefresh().build().execute();
+    
+            // Set access and refresh token for further "spotifyApi" object usage
+            spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+    
+            Console.printout("Token refreshed successfully!", MessageType.INFO);
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            Console.printout("Error refreshing token: " + e.getMessage(), MessageType.ERROR);
+        }
+    }
+    
 
     public static void reader() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
