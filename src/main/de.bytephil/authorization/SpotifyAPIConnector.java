@@ -19,6 +19,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.security.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +31,9 @@ public class SpotifyAPIConnector {
     private static final URI redirectUri = SpotifyHttpManager.makeUri(Main.config.webaddress + "auth.html");
     public static String code = "";
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200; 
+
+    private Instant requestTime;
+    private JSONObject cachedSong;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)
@@ -114,19 +120,25 @@ public class SpotifyAPIConnector {
     }
 
     public JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
-        IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
-        if (playlistItem instanceof Track) {
-            Track track = (Track) playlistItem;
-            JSONObject trackInfo = new JSONObject();
-            trackInfo.put("name", track.getName());
-            trackInfo.put("artists", getArtists(track.getArtists()));
-            trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
-            trackInfo.put("uri", track.getUri());
-            return trackInfo;
-        } else {
-            // Handle the case where the item is not a track (e.g., it's an episode)
-            return null;
+        if (requestTime == null) {
+            requestTime = Instant.now();
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
+            IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
+            if (playlistItem instanceof Track) {
+                Track track = (Track) playlistItem;
+                JSONObject trackInfo = new JSONObject();
+                trackInfo.put("name", track.getName());
+                trackInfo.put("artists", getArtists(track.getArtists()));
+                trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
+                trackInfo.put("uri", track.getUri());
+                requestTime = Instant.now();
+                cachedSong = trackInfo;
+                return trackInfo;
+            } else {
+                return null;
+            }
         }
+        return cachedSong;
     }
 
     private String getArtists(ArtistSimplified[] artists) {

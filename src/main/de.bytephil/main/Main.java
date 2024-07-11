@@ -33,6 +33,9 @@ public class Main {
 
     public static String refreshToken;
 
+    SpotifyAPIConnector spotify;
+
+
     public static Main getInstance() {
         return instance;
     }
@@ -65,6 +68,7 @@ public class Main {
 
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();  
+        spotify = new SpotifyAPIConnector();
     }
 
     public void startApp() throws IOException {
@@ -83,7 +87,6 @@ public class Main {
                 SpotifyAPIConnector.authorizationCode_Sync(message);
             });
         });
-        SpotifyAPIConnector spotify = new SpotifyAPIConnector();
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
