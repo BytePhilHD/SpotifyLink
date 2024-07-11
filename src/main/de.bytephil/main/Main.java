@@ -107,6 +107,9 @@ public class Main {
 
                 } catch (Exception e1) {
                     Console.printout("Error occured when refreshing: " + e1.getMessage(), MessageType.ERROR);
+                    if (e1.getMessage().contains("The access token expired")) {
+                        SpotifyAPIConnector.refreshToken();
+                    }
                 }
             });
             ws.onClose(ctx -> {
@@ -145,6 +148,7 @@ public class Main {
                     // wird Hashmap mit Zeit und dem aktuellen Song
                     // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
                     // senden
+                    // TODO  spotify.getUsersQueue();  implementieren (Response ist List<IPlaybackItem>)
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {

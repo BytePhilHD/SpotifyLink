@@ -7,6 +7,7 @@ import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.model_objects.special.PlaybackQueue;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import org.apache.hc.core5.http.ParseException;
@@ -18,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SpotifyAPIConnector {
@@ -91,6 +93,16 @@ public class SpotifyAPIConnector {
 
     }
 
+
+    public List<IPlaylistItem> getUsersQueue() {
+        try {
+            List<IPlaylistItem> queue = spotifyApi.getTheUsersQueue().build().execute().getQueue();
+            return queue;
+        } catch(Exception e1) {
+            Console.printout(e1.getMessage(), MessageType.ERROR);
+            return null;
+        }
+    }
 
     public String getURL() {
         try {
