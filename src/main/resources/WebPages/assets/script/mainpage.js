@@ -25,7 +25,7 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
-    ws = new WebSocket();
+    ws = new WebSocket("wss://" + location.hostname + ":" + location.port + "/main");
 
     setInterval(refresh, 2000);
 
