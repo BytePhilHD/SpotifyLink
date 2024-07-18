@@ -35,7 +35,6 @@ public class Main {
 
     SpotifyAPIConnector spotify;
 
-
     public static Main getInstance() {
         return instance;
     }
@@ -67,7 +66,7 @@ public class Main {
         }
 
         startApp();
-        AuthenticationURI.authorizationCodeUri_Sync();  
+        AuthenticationURI.authorizationCodeUri_Sync();
         spotify = new SpotifyAPIConnector();
     }
 
@@ -126,6 +125,18 @@ public class Main {
                     ctx.closeSession();
                     return;
                 }
+                if (ctx.message().contains("AUTH")) {
+                    JSONObject data = new JSONObject(ctx.message());
+
+                    if (logtIn.contains(data.get("AUTH"))) {
+                        if (data.get("ACTION").equals("PLAYPAUSE")) {
+                            spotify.playPauseSong();
+                        }
+                    } else {
+                        ctx.send("close");
+                    }
+
+                }
                 /*
                  * if (ctx.message().equals("BACK")) {
                  * new SpotifyAPIConnector().songBack();
@@ -151,7 +162,8 @@ public class Main {
                     // wird Hashmap mit Zeit und dem aktuellen Song
                     // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
                     // senden
-                    // TODO  spotify.getUsersQueue();  implementieren (Response ist List<IPlaybackItem>)
+                    // TODO spotify.getUsersQueue(); implementieren (Response ist
+                    // List<IPlaybackItem>)
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {
@@ -188,14 +200,12 @@ public class Main {
             });
         });
 
-        app.ws("/login", ws ->
-
-        {
+        app.ws("/login", ws -> {
             ws.onMessage(ctx -> {
                 if (LoginService.login(ctx.message(), ctx.getSessionId())) {
                     logtIn.add(ctx.getSessionId());
                     ctx.send("CORRECT " + ctx.getSessionId());
-                    Console.printout("User " + ctx.session.getRemoteAddress() + "logged into Admin account!",
+                    Console.printout("User " + ctx.session.getRemoteAddress() + " logged into Admin account!",
                             MessageType.INFO);
                 } else {
                     ctx.send("WRONG");

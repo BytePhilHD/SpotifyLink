@@ -1,6 +1,5 @@
 window.onload = setupWebSocket;
 let ws;
-let uri;
 let uri1;
 let uri2;
 let uri3;
@@ -25,12 +24,16 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
-    ws = new WebSocket();
+    ws = new WebSocket("wss://" + location.hostname + ":" + location.port + "/main");
 
     setInterval(refresh, 2000);
 
     hideSearch();
     ws.onmessage = messageEvent => {
+        if (messageEvent.data == "close") {
+            window.location.href = location.protocol + "//" + location.hostname + ":" + location.port + "/login";
+            return;
+        }        
         let wsinput = JSON.parse(messageEvent.data);
 
         if (wsinput["name"] !== undefined) {
@@ -96,43 +99,50 @@ function setupWebSocket() {
     }
 }
 // Buttons for selecting the right song
-document.getElementById('search-1-button').onclick = function () {
-    ws.send("Song-Play: " + uri1);
+document.getElementById('search-1-button').onclick = function() {
+    ws.send("AUTH: " + location.search.replace("successful", "") + "Song-Play: " + uri1);
     hideSearch();
     document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-    sentValue = document.querySelector('#searchbar').value;
 }
-document.getElementById('search-2-button').onclick = function () {
+document.getElementById('search-2-button').onclick = function() {
     ws.send("Song-Play: " + uri2);
     hideSearch();
     document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-    sentValue = document.querySelector('#searchbar').value;
 }
-document.getElementById('search-3-button').onclick = function () {
+document.getElementById('search-3-button').onclick = function() {
     ws.send("Song-Play: " + uri3);
     hideSearch();
     document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
-    sentValue = document.querySelector('#searchbar').value;
-}
-document.getElementById('song-cover').onclick = function () {
-    location.href = url;
 }
 
 // refresh function which gets timed every 1000 ms (on the top)
 function refresh() {
     ws.send("refresh");
-    if (input.value !== null && input.value !== "") {
+    if (input.value != null) {
         ws.send("Search: " + input.value);
     }
 }
 
+// if input is entered, the value gets sent to the websocket
 const input = document.querySelector('#searchbar');
 
 input.addEventListener('change', updateValue);
 
 function updateValue() {
-    if (input.value !== null && input.value !== "") {
-        ws.send("Search: " + input.value);
-    }
+    ws.send("Search: " + input.value);
 }
-
+let data = {
+    "AUTH" : location.search.replace("?", ""),
+    "ACTION" : ""
+}
+document.getElementById('back-button').onclick = function() {
+    ws.send("BACK");
+}
+document.getElementById('play-button').onclick = function() {
+    data.ACTION = "PLAYPAUSE";
+    ws.send(JSON.stringify(data));
+    console.log("SENT " + JSON.stringify(data));
+}
+document.getElementById('vorward-button').onclick = function() {
+    ws.send("VORWARD");
+}

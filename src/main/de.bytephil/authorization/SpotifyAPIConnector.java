@@ -30,7 +30,7 @@ public class SpotifyAPIConnector {
     private static final String clientSecret = Main.config.clientSecret;
     private static final URI redirectUri = SpotifyHttpManager.makeUri(Main.config.webaddress + "auth.html");
     public static String code = "";
-    private static final long PAUSE_BETWEEN_REQUESTS_MS = 200; 
+    private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
 
     private Instant requestTime;
     private JSONObject cachedSong;
@@ -47,16 +47,17 @@ public class SpotifyAPIConnector {
 
     public static void authorizationCode_Sync(String code1) {
         try {
-            final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCode(code1).build().execute();
-    
+            final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCode(code1)
+                    .build().execute();
+
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
-    
+
             Console.printout("Authentication successful!", MessageType.INFO);
             Console.printout(authorizationCodeCredentials.getAccessToken(), MessageType.INFO);
             reader();
-    
+
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             if (e.getMessage().contains("Authorization code expired")) {
@@ -66,20 +67,20 @@ public class SpotifyAPIConnector {
             }
         }
     }
-    
+
     public static void refreshToken() {
         try {
-            final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCodeRefresh().build().execute();
-    
+            final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCodeRefresh()
+                    .build().execute();
+
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-    
+
             Console.printout("Token refreshed successfully!", MessageType.INFO);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             Console.printout("Error refreshing token: " + e.getMessage(), MessageType.ERROR);
         }
     }
-    
 
     public static void reader() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
@@ -87,7 +88,7 @@ public class SpotifyAPIConnector {
             // ...
         } catch (IOException e1) {
             Console.printout("Error in reader: " + e1.getMessage(), MessageType.ERROR);
-        } 
+        }
     }
 
     public void addSongtoList(String uri) {
@@ -99,12 +100,11 @@ public class SpotifyAPIConnector {
 
     }
 
-
     public List<IPlaylistItem> getUsersQueue() {
         try {
             List<IPlaylistItem> queue = spotifyApi.getTheUsersQueue().build().execute().getQueue();
             return queue;
-        } catch(Exception e1) {
+        } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
             return null;
         }
@@ -153,8 +153,6 @@ public class SpotifyAPIConnector {
         return artistsNames.toString();
     }
 
-
-
     public String readCurrentSong() {
         try {
             return getCurrentTrackItem().getName();
@@ -169,7 +167,7 @@ public class SpotifyAPIConnector {
             String trackID = getCurrentTrackItem().getId();
             if (!trackID.equals(currentTrackId)) {
                 currentTrackId = trackID;
-                TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS);  // Pause between requests
+                TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS); // Pause between requests
                 currentAlbumCover = spotifyApi.getTrack(trackID).build().execute().getAlbum().getImages()[0].getUrl();
             }
             return currentAlbumCover;
@@ -179,13 +177,12 @@ public class SpotifyAPIConnector {
         }
     }
 
-
     public ArtistSimplified[] currentSongArtist() {
         try {
             String id = getCurrentTrackItem().getId();
             if (!id.equals(currentTrackId)) {
                 currentTrackId = id;
-                TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS);  // Pause between requests
+                TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS); // Pause between requests
                 currentTrackArtists = spotifyApi.getTrack(id).build().execute().getArtists();
             }
             return currentTrackArtists;
@@ -202,6 +199,33 @@ public class SpotifyAPIConnector {
         } else {
             // Handle the case where the item is not a track (e.g., it's an episode)
             return null;
+        }
+    }
+
+    public void songBack() {
+        try {
+            spotifyApi.skipUsersPlaybackToPreviousTrack().build().execute();
+        } catch (Exception e1) {
+        }
+    }
+
+    public void playPauseSong() {
+        try {
+            spotifyApi.pauseUsersPlayback().build().execute();
+            return;
+        } catch (Exception e1) {
+        }
+        try {
+            spotifyApi.startResumeUsersPlayback().build().execute();
+            return;
+        } catch (Exception e1) {
+        }
+    }
+
+    public void songVorward() {
+        try {
+            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
+        } catch (Exception e1) {
         }
     }
 }
