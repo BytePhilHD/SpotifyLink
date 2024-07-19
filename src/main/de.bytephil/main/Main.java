@@ -3,6 +3,7 @@ package main;
 import authorization.SpotifyAPIConnector;
 import authorization.AuthenticationURI;
 import handlers.SearchRequest;
+import handlers.SpotifyHandler;
 import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -137,15 +138,6 @@ public class Main {
                     }
 
                 }
-                /*
-                 * if (ctx.message().equals("BACK")) {
-                 * new SpotifyAPIConnector().songBack();
-                 * } else if (ctx.message().equals("PAUSE")) {
-                 * new SpotifyAPIConnector().playPauseSong();
-                 * } else if (ctx.message().equals("VORWARD")) {
-                 * new SpotifyAPIConnector().songVorward();
-                 * }
-                 */
                 if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
 
@@ -195,7 +187,7 @@ public class Main {
                         return;
                     }
                     new SpotifyAPIConnector().addSongtoList(url);
-
+                    ctx.send("QUEUE-LENGTH: " + new SpotifyHandler().getDurationtoSong(url));
                 }
             });
         });
