@@ -30,6 +30,8 @@ public class Main {
     private static ArrayList<String> logtIn = new ArrayList<>();
     public ArrayList<String> blockedUsers = new ArrayList<>();
 
+    public ArrayList<String> playedSongs = new ArrayList<>();
+
     private static Main instance;
 
     public static String refreshToken;
@@ -109,7 +111,6 @@ public class Main {
                     }
 
                 } catch (Exception e1) {
-                    Console.printout("Error occured when refreshing: " + e1.getMessage(), MessageType.ERROR);
                     if (e1.getMessage().contains("The access token expired")) {
                         SpotifyAPIConnector.refreshToken();
                     }
@@ -122,6 +123,7 @@ public class Main {
                         MessageType.INFO);
             });
             ws.onMessage(ctx -> {
+                SpotifyHandler spotifyAPIHandler = new SpotifyHandler();
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
@@ -175,6 +177,7 @@ public class Main {
                             trackInfo.put("artists", getArtists(trackPaging.getItems()[i].getArtists()));
                             trackInfo.put("cover", trackPaging.getItems()[i].getAlbum().getImages()[0].getUrl());
                             trackInfo.put("uri", trackPaging.getItems()[i].getUri());
+                            trackInfo.put("played", checkSongisQueue(trackPaging.getItems()[i].getUri()));
                             searchResults.put("search-" + (i + 1), trackInfo);
                         }
                         ctx.send(searchResults.toString());
@@ -187,7 +190,8 @@ public class Main {
                         return;
                     }
                     new SpotifyAPIConnector().addSongtoList(url);
-                    ctx.send("QUEUE-LENGTH: " + new SpotifyHandler().getDurationtoSong(url));
+                    playedSongs.add(url);
+                    ctx.send("QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
                 }
             });
         });
@@ -266,5 +270,14 @@ public class Main {
             configOutputStream.write(buffer, 0, readBytes);
         }
         defaultConfStream.close();
+    }
+
+    public boolean checkSongisQueue(String url) {
+        if (playedSongs.contains(url)) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 }

@@ -70,6 +70,14 @@ function setupWebSocket() {
                 document.getElementById("search-1-cover").src = search1["cover"];
                 document.getElementById("search-1-button").style.visibility = "visible";
                 uri1 = search1["uri"];
+                var button1 = document.getElementById("search-1-button");
+                if (search1["played"] == true) {
+                    button1.style.backgroundColor = "#FFA500"; 
+                    button1.style.borderColor = "#FFA500";
+                } else {
+                    button1.style.backgroundColor = ""; 
+                    button1.style.borderColor = "";
+                }
             }
             if (wsinput.hasOwnProperty("search-2")) {
                 let search2 = wsinput["search-2"];
@@ -81,6 +89,14 @@ function setupWebSocket() {
                 document.getElementById("search-2-cover").src = search2["cover"];
                 document.getElementById("search-2-button").style.visibility = "visible";
                 uri2 = search2["uri"];
+                var button2 = document.getElementById("search-2-button");
+                if (search2["played"] == true) {
+                    button2.style.backgroundColor = "#FFA500"; 
+                    button2.style.borderColor = "#FFA500";
+                } else {
+                    button2.style.backgroundColor = ""; 
+                    button2.style.borderColor = "";
+                }
             }
             if (wsinput.hasOwnProperty("search-3")) {
                 let search3 = wsinput["search-3"];
@@ -92,8 +108,16 @@ function setupWebSocket() {
                 document.getElementById("search-3-cover").src = search3["cover"];
                 document.getElementById("search-3-button").style.visibility = "visible";
                 uri3 = search3["uri"];
+                var button3 = document.getElementById("search-3-button");
+                if (search3["played"] == true) {
+                    button3.style.backgroundColor = "#FFA500"; 
+                    button3.style.borderColor = "#FFA500";
+                } else {
+                    button3.style.backgroundColor = ""; 
+                    button3.style.borderColor = "";
+                }
             }
-        }
+        }        
     }
     ws.onclose = closeEvent => {
         ws = null;
