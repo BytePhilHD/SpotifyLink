@@ -4,23 +4,28 @@ import authorization.SpotifyAPIConnector;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import java.util.List;
 
-public class SpotifyHandler{
+public class SpotifyHandler {
     
     private SpotifyAPIConnector spotifyAPI = new SpotifyAPIConnector();
 
     public int getDurationtoSong(String url) {
-        List<IPlaylistItem> userqueue = spotifyAPI.getUsersQueue();
-        int length = 0;
+        List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
+        int lengthInSeconds = 0;
+        
         try {
-            length = spotifyAPI.getCurrentTrackItem().getDurationMs()/1000;
-        } catch(Exception e1) {}
-        for (int i = 0; i < userqueue.size(); i++) {
-            if (userqueue.get(i).getUri().equals(url)) {
-                return length/60; 
+            lengthInSeconds += spotifyAPI.getCurrentTrackItem().getDurationMs() / 1000;
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
+        for (IPlaylistItem item : userQueue) {
+            if (item.getUri().equals(url)) {
+                return (int) Math.ceil(lengthInSeconds / 60.0);
             } else {
-                length = length + (userqueue.get(i).getDurationMs()/1000);
+                lengthInSeconds += item.getDurationMs() / 1000;
             }
         }
-        return 0;
+        
+        return -1;
     }
 }
