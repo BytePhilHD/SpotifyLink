@@ -120,8 +120,12 @@ function setupWebSocket() {
         }        
     }
     ws.onclose = closeEvent => {
-        ws = null;
-        setupWebSocket();
+        if (ws.readyState == 0) {
+            return;
+        } else {
+            ws = null;
+            setupWebSocket();
+        }
     }
 }
 // Buttons for selecting the right song
@@ -149,6 +153,9 @@ document.getElementById('song-cover').onclick = function () {
 
 // refresh function which gets timed every 1000 ms (on the top)
 function refresh() {
+    if (ws.readyState == 0) {
+        return;
+    }
     ws.send("refresh");
     if (input.value !== null && input.value !== "") {
         ws.send("Search: " + input.value);
