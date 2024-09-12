@@ -78,7 +78,7 @@
     }
 
     function setupWebSocket() {
-        ws = new WebSocket("ws://" + location.hostname + "/login");
+        ws = new WebSocket("wss://" + location.hostname + "/login");
         ws.onmessage = messageEvent => {
             var wsinput = messageEvent.data;
             if (wsinput.includes("CORRECT")) {
@@ -86,10 +86,9 @@
                 window.location.href = location.protocol + "admin?" + wsinput;
 
             } else if (wsinput.includes("WRONG")) {
-                window.location.href = location.protocol + "login?wrongpw"
+                //window.location.href = location.protocol + "login?wrongpw"
             }
         }
-
     }
 
 
