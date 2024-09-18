@@ -7,9 +7,9 @@ import handlers.SpotifyHandler;
 import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import services.Console;
 import services.LoginService;
 import utils.ServerConfiguration;
@@ -36,7 +36,7 @@ public class Main {
 
     public static String refreshToken;
 
-    SpotifyAPIConnector spotify;
+    SpotifyAPIConnector spotifyConnector;
 
     public static Main getInstance() {
         return instance;
@@ -63,20 +63,24 @@ public class Main {
             Console.printout("Config not loaded! Using default.", MessageType.WARNING);
             Console.printout("", MessageType.INFO);
             Console.printout(
-                    " It seems like you startet SpotifyLink for the first time. Please update your Spotify API Credentials in the config file!",
+                    " It seems like you startet SpotifyLink for the first time. Please update your spotifyConnector API Credentials in the config file!",
                     MessageType.INFO);
             Console.printout("", MessageType.INFO);
         }
 
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
-        spotify = new SpotifyAPIConnector();
+        spotifyConnector = new SpotifyAPIConnector();
     }
 
     public void startApp() throws IOException {
 
         Javalin app = Javalin.create(config -> {
-            config.addStaticFiles("WebPages", Location.CLASSPATH);
+            config.staticFiles.add(staticFileConfig -> {
+                staticFileConfig.hostedPath = "/";
+                staticFileConfig.directory = "WebPages";
+                staticFileConfig.location = Location.CLASSPATH;
+            });
             config.showJavalinBanner = false;
         }).start(config.port);
 
@@ -92,16 +96,16 @@ public class Main {
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
-                if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
+                if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
                 }
                 Console.printout(
                         "User connected to main websocket. (IP: "
-                                + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
+                                + ctx.session.getRemoteAddress().toString().replace("/", "") + ")",
                         MessageType.INFO);
                 try {
-                    JSONObject data = spotify.getCurrentTrackInfo();
+                    JSONObject data = spotifyConnector.getCurrentTrackInfo();
                     if (data == null) {
                         JSONObject songInfo = new JSONObject();
                         songInfo.put("Not-playing", true);
@@ -119,12 +123,12 @@ public class Main {
             ws.onClose(ctx -> {
                 Console.printout(
                         "User disconnected from main websocket. (IP: "
-                                + ctx.session.getRemoteAddress().getAddress().toString().replace("/", "") + ")",
+                                + ctx.session.getRemoteAddress().toString().replace("/", "") + ")",
                         MessageType.INFO);
             });
             ws.onMessage(ctx -> {
                 SpotifyHandler spotifyAPIHandler = new SpotifyHandler();
-                if (blockedUsers.contains(ctx.session.getRemoteAddress().getAddress().toString().replace("/", ""))) {
+                if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
                 }
@@ -133,7 +137,7 @@ public class Main {
 
                     if (logtIn.contains(data.get("AUTH"))) {
                         if (data.get("ACTION").equals("PLAYPAUSE")) {
-                            spotify.playPauseSong();
+                            spotifyConnector.playPauseSong();
                         }
                     } else {
                         ctx.send("close");
@@ -143,7 +147,7 @@ public class Main {
                 if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
 
-                        JSONObject data = spotify.getCurrentTrackInfo();
+                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         ctx.send(data.toString());
 
                     } catch (Exception e1) {
@@ -154,17 +158,17 @@ public class Main {
 
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
                     // wird Hashmap mit Zeit und dem aktuellen Song
-                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an Spotify
+                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an spotifyConnector
                     // senden
-                    // TODO spotify.getUsersQueue(); implementieren (Response ist
+                    // TODO spotifyConnector.getUsersQueue(); implementieren (Response ist
                     // List<IPlaybackItem>)
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {
                         return;
                     }
-                    if (userSearch.containsKey(ctx.getSessionId())) {
-                        if (userSearch.get(ctx.getSessionId()).equalsIgnoreCase(ctx.message())) {
+                    if (userSearch.containsKey(ctx.sessionId())) {
+                        if (userSearch.get(ctx.sessionId()).equalsIgnoreCase(ctx.message())) {
                             return;
                         }
                     }
@@ -181,7 +185,7 @@ public class Main {
                             searchResults.put("search-" + (i + 1), trackInfo);
                         }
                         ctx.send(searchResults.toString());
-                        userSearch.put(ctx.getSessionId(), ctx.message());
+                        userSearch.put(ctx.sessionId(), ctx.message());
                     } catch (Exception e1) {
                     }
                 } else if (ctx.message().contains("Song-Play")) {
@@ -198,9 +202,9 @@ public class Main {
 
         app.ws("/login", ws -> {
             ws.onMessage(ctx -> {
-                if (LoginService.login(ctx.message(), ctx.getSessionId())) {
-                    logtIn.add(ctx.getSessionId());
-                    ctx.send("CORRECT " + ctx.getSessionId());
+                if (LoginService.login(ctx.message(), ctx.sessionId())) {
+                    logtIn.add(ctx.sessionId());
+                    ctx.send("CORRECT " + ctx.sessionId());
                     Console.printout("User " + ctx.session.getRemoteAddress() + " logged into Admin account!",
                             MessageType.INFO);
                 } else {
@@ -215,7 +219,7 @@ public class Main {
                     message = message.replace("LOGIN", "").replace("?", "");
 
                     if (logtIn.contains(message)) {
-                        logtIn.add(ctx.getSessionId());
+                        logtIn.add(ctx.sessionId());
                         logtIn.remove(message);
 
                         ctx.send("CONFIRMED");
