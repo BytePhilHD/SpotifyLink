@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.hc.core5.http.ParseException;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import authorization.AuthenticationURI;
@@ -17,6 +19,9 @@ import handlers.SearchRequest;
 import handlers.SpotifyHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.websocket.WsConfig;
+import io.javalin.websocket.WsConnectContext;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -28,10 +33,10 @@ public class Main {
 
     public static ServerConfiguration config;
 
-    private static HashMap<String, String> userSearch = new HashMap<>();
-    private static ArrayList<String> logtIn = new ArrayList<>();
+    private static final HashMap<String, String> userSearch = new HashMap<>();
+    private static final ArrayList<String> logtIn = new ArrayList<>();
     public static ArrayList<String> blockedUsers = new ArrayList<>();
-    private static ArrayList<String> playedSongs = new ArrayList<>();
+    private static final ArrayList<String> playedSongs = new ArrayList<>();
 
     private static Main instance;
 
@@ -96,8 +101,8 @@ public class Main {
             });
         });
 
-        app.ws("/main", ws -> {
-            ws.onConnect(ctx -> {
+        app.ws("/main", (WsConfig ws) -> {
+            ws.onConnect((WsConnectContext ctx) -> {
                 System.out.println("Wir sind hier");
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
@@ -116,7 +121,7 @@ public class Main {
                         ctx.send(data.toString());
                     }
 
-                } catch (Exception e1) {
+                } catch (IOException | ParseException | JSONException | SpotifyWebApiException e1) {
                     if (e1.getMessage().contains("The access token expired")) {
                         SpotifyAPIConnector.refreshToken();
                     }
@@ -137,7 +142,7 @@ public class Main {
                 if (ctx.message().contains("AUTH")) {
                     JSONObject data = new JSONObject(ctx.message());
 
-                    if (logtIn.contains(data.get("AUTH"))) {
+                    if (logtIn.contains((String) data.get("AUTH"))) {
                         if (data.get("ACTION").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
                         }
@@ -152,7 +157,7 @@ public class Main {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         ctx.send(data.toString());
 
-                    } catch (Exception e1) {
+                    } catch (IOException | ParseException | SpotifyWebApiException e1) {
                         JSONObject songInfo = new JSONObject();
                         songInfo.put("Not-playing", true);
                         ctx.send(songInfo.toString());
