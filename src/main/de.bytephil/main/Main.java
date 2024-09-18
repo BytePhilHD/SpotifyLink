@@ -103,25 +103,22 @@ public class Main {
 
         app.ws("/main", (WsConfig ws) -> {
             ws.onConnect((WsConnectContext ctx) -> {
-                System.out.println("Wir sind hier");
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                 }
                 Console.printout(
                         "User connected to main websocket. (IP: "
-                                + ctx.session.getRemoteAddress().toString().replace("/", "") + ")",
+                                + (ctx.session.getRemoteAddress() != null
+                                        ? ctx.session.getRemoteAddress().toString().replace("/", "")
+                                        : "unknown")
+                                + ")",
                         MessageType.INFO);
                 try {
                     JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                    if (data == null) {
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Not-playing", true);
-                        ctx.send(songInfo.toString());
-                    } else {
+                    if (data != null) {
                         ctx.send(data.toString());
-                    }
-
-                } catch (IOException | ParseException | JSONException | SpotifyWebApiException e1) {
+                    } 
+                } catch (Exception e1) {
                     if (e1.getMessage().contains("The access token expired")) {
                         SpotifyAPIConnector.refreshToken();
                     }
@@ -130,7 +127,10 @@ public class Main {
             ws.onClose(ctx -> {
                 Console.printout(
                         "User disconnected from main websocket. (IP: "
-                                + ctx.session.getRemoteAddress().toString().replace("/", "") + ")",
+                                + (ctx.session.getRemoteAddress() != null
+                                        ? ctx.session.getRemoteAddress().toString().replace("/", "")
+                                        : "unknown")
+                                + ")",
                         MessageType.INFO);
             });
             ws.onMessage(ctx -> {
@@ -155,7 +155,9 @@ public class Main {
                     try {
 
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                        ctx.send(data.toString());
+                        if (data != null) {
+                            ctx.send(data.toString());
+                        }
 
                     } catch (IOException | ParseException | SpotifyWebApiException e1) {
                         JSONObject songInfo = new JSONObject();
@@ -165,7 +167,8 @@ public class Main {
 
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
                     // wird Hashmap mit Zeit und dem aktuellen Song
-                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an spotifyConnector
+                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an
+                    // spotifyConnector
                     // senden
                     // TODO spotifyConnector.getUsersQueue(); implementieren (Response ist
                     // List<IPlaybackItem>)
@@ -241,7 +244,7 @@ public class Main {
 
     private static void copyFile(File dest, String source) throws IOException {
         try (InputStream is = Main.class.getClassLoader().getResourceAsStream(source);
-             OutputStream os = new FileOutputStream(dest)) {
+                OutputStream os = new FileOutputStream(dest)) {
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
