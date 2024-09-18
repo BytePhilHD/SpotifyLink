@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 
 import org.json.JSONObject;
@@ -31,14 +30,14 @@ public class Main {
 
     private static HashMap<String, String> userSearch = new HashMap<>();
     private static ArrayList<String> logtIn = new ArrayList<>();
-    private static ArrayList<String> blockedUsers = new ArrayList<>();
+    public static ArrayList<String> blockedUsers = new ArrayList<>();
     private static ArrayList<String> playedSongs = new ArrayList<>();
 
     private static Main instance;
 
     public static String refreshToken;
 
-    SpotifyAPIConnector spotifyConnector;
+    private static SpotifyAPIConnector spotifyConnector;
 
     public static Main getInstance() {
         return instance;
@@ -69,7 +68,7 @@ public class Main {
         }
 
         // Initialize Spotify API Connector
-        spotifyConnector = new SpotifyAPIConnector(config);
+        spotifyConnector = new SpotifyAPIConnector();
 
         // Start the Javalin server
         startApp();
@@ -78,13 +77,13 @@ public class Main {
     }
 
     public static void startApp() throws IOException {
-        Javalin app = Javalin.create(config -> {
-            config.staticFiles.add(staticFileConfig -> {
+        Javalin app = Javalin.create(javalinConfig -> {
+            javalinConfig.staticFiles.add(staticFileConfig -> {
                 staticFileConfig.hostedPath = "/";
                 staticFileConfig.directory = "WebPages";
                 staticFileConfig.location = Location.CLASSPATH;
             });
-            config.showJavalinBanner = false;
+            javalinConfig.showJavalinBanner = false;
         }).start(8080); // Ändere den Port hier
 
         app.ws("/auth", ws -> {
@@ -99,6 +98,7 @@ public class Main {
 
         app.ws("/main", ws -> {
             ws.onConnect(ctx -> {
+                System.out.println("Wir sind hier");
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                 }

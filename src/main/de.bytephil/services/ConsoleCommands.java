@@ -4,8 +4,6 @@ package services;
 import enums.MessageType;
 import main.Main;
 
-import java.util.List;
-
 public class ConsoleCommands {
 
     public void handleCommand(String command) {
@@ -24,10 +22,10 @@ public class ConsoleCommands {
             Console.printout("List all applications  - applies list", MessageType.INFO);
 
         } else if (commandargs[0].toLowerCase().equalsIgnoreCase("block")) {
-            Main.getInstance().blockedUsers.add(commandargs[1]);
+            Main.blockedUsers.add(commandargs[1]);
             Console.printout("Added " + commandargs[1] + " to the blocked list!", MessageType.INFO);
         } else if (commandargs[0].toLowerCase().equals("unblock")) {
-            Main.getInstance().blockedUsers.remove(commandargs[1]);
+            Main.blockedUsers.remove(commandargs[1]);
             Console.printout("Removed " + commandargs[1] + " from the blocked list!", MessageType.INFO);
         } else {
             Console.printout("Unknown command! Type \"help\" for help!", MessageType.INFO);

@@ -22,7 +22,6 @@ import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCrede
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
-import utils.ServerConfiguration;
 
 public class SpotifyAPIConnector {
     private static final String clientId = Main.config.clientID;
@@ -33,9 +32,6 @@ public class SpotifyAPIConnector {
 
     private Instant requestTime;
     private JSONObject cachedSong;
-
-    public SpotifyAPIConnector(ServerConfiguration config) {
-    }
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)
