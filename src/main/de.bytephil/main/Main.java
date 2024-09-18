@@ -1,26 +1,29 @@
 package main;
 
-import authorization.SpotifyAPIConnector;
-import authorization.AuthenticationURI;
-import handlers.SearchRequest;
-import handlers.SpotifyHandler;
-import enums.MessageType;
-import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
-import se.michaelthelin.spotify.model_objects.specification.Paging;
-import se.michaelthelin.spotify.model_objects.specification.Track;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
-import services.Console;
-import services.LoginService;
-import utils.ServerConfiguration;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
 import org.json.JSONObject;
+
+import authorization.AuthenticationURI;
+import authorization.SpotifyAPIConnector;
+import enums.MessageType;
+import handlers.SearchRequest;
+import handlers.SpotifyHandler;
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.Track;
+import services.Console;
+import services.LoginService;
+import utils.ServerConfiguration;
 
 public class Main {
 

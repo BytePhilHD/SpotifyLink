@@ -1,5 +1,17 @@
 package authorization;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hc.core5.http.ParseException;
+import org.json.JSONObject;
+
 import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -7,23 +19,9 @@ import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
-import se.michaelthelin.spotify.model_objects.special.PlaybackQueue;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
-import org.apache.hc.core5.http.ParseException;
-import org.json.JSONObject;
-
 import services.Console;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.security.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class SpotifyAPIConnector {
     private static final String clientId = Main.config.clientID;
