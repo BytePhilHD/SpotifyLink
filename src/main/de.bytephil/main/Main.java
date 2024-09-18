@@ -1,10 +1,21 @@
 package main;
 
-import authorization.SpotifyAPIConnector;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+
+import org.json.JSONObject;
+
 import authorization.AuthenticationURI;
+import authorization.SpotifyAPIConnector;
+import enums.MessageType;
 import handlers.SearchRequest;
 import handlers.SpotifyHandler;
-import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
@@ -12,15 +23,7 @@ import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import services.LoginService;
-import utils.ServerConfiguration; // Ensure this import is correct and the class exists in the utils package
-
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-
-import org.json.JSONObject;
+import utils.ServerConfiguration;
 
 public class Main {
 
@@ -35,7 +38,7 @@ public class Main {
 
     public static String refreshToken;
 
-    private static SpotifyAPIConnector spotifyConnector;
+    SpotifyAPIConnector spotifyConnector;
 
     public static Main getInstance() {
         return instance;
@@ -70,6 +73,8 @@ public class Main {
 
         // Start the Javalin server
         startApp();
+        AuthenticationURI.authorizationCodeUri_Sync();
+        spotifyConnector = new SpotifyAPIConnector();
     }
 
     public static void startApp() throws IOException {
@@ -130,7 +135,35 @@ public class Main {
                     return;
                 }
                 if (ctx.message().contains("AUTH")) {
-                    // Handle AUTH message
+                    JSONObject data = new JSONObject(ctx.message());
+
+                    if (logtIn.contains(data.get("AUTH"))) {
+                        if (data.get("ACTION").equals("PLAYPAUSE")) {
+                            spotifyConnector.playPauseSong();
+                        }
+                    } else {
+                        ctx.send("close");
+                    }
+
+                }
+                if (ctx.message().equalsIgnoreCase("refresh")) {
+                    try {
+
+                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
+                        ctx.send(data.toString());
+
+                    } catch (Exception e1) {
+                        JSONObject songInfo = new JSONObject();
+                        songInfo.put("Not-playing", true);
+                        ctx.send(songInfo.toString());
+                    }
+
+                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
+                    // wird Hashmap mit Zeit und dem aktuellen Song
+                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an spotifyConnector
+                    // senden
+                    // TODO spotifyConnector.getUsersQueue(); implementieren (Response ist
+                    // List<IPlaybackItem>)
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {
@@ -162,7 +195,40 @@ public class Main {
                     if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    // Handle Song-Play message
+                    new SpotifyAPIConnector().addSongtoList(url);
+                    playedSongs.add(url);
+                    ctx.send("QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
+                }
+            });
+        });
+
+        app.ws("/login", ws -> {
+            ws.onMessage(ctx -> {
+                if (LoginService.login(ctx.message(), ctx.sessionId())) {
+                    logtIn.add(ctx.sessionId());
+                    ctx.send("CORRECT " + ctx.sessionId());
+                    Console.printout("User " + ctx.session.getRemoteAddress() + " logged into Admin account!",
+                            MessageType.INFO);
+                } else {
+                    ctx.send("WRONG");
+                }
+            });
+        });
+        app.ws("/admin", ws -> {
+            ws.onMessage(ctx -> {
+                String message = ctx.message();
+                if (message.contains("LOGIN")) {
+                    message = message.replace("LOGIN", "").replace("?", "");
+
+                    if (logtIn.contains(message)) {
+                        logtIn.add(ctx.sessionId());
+                        logtIn.remove(message);
+
+                        ctx.send("CONFIRMED");
+                    } else {
+                        ctx.send("CLOSE");
+                    }
+
                 }
             });
         });
