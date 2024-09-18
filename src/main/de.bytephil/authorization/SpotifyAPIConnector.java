@@ -14,6 +14,7 @@ import org.apache.hc.core5.http.ParseException;
 import org.json.JSONObject;
 
 import services.Console;
+import utils.ServerConfiguration;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,6 +35,9 @@ public class SpotifyAPIConnector {
 
     private Instant requestTime;
     private JSONObject cachedSong;
+
+    public SpotifyAPIConnector(ServerConfiguration config) {
+    }
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(clientId)

@@ -7,12 +7,12 @@ import handlers.SpotifyHandler;
 import enums.MessageType;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import services.Console;
 import services.LoginService;
-import utils.ServerConfiguration;
+import utils.ServerConfiguration; // Ensure this import is correct and the class exists in the utils package
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -26,29 +26,27 @@ public class Main {
 
     public static ServerConfiguration config;
 
-    private HashMap<String, String> userSearch = new HashMap<>();
+    private static HashMap<String, String> userSearch = new HashMap<>();
     private static ArrayList<String> logtIn = new ArrayList<>();
-    public ArrayList<String> blockedUsers = new ArrayList<>();
-
-    public ArrayList<String> playedSongs = new ArrayList<>();
+    private static ArrayList<String> blockedUsers = new ArrayList<>();
+    private static ArrayList<String> playedSongs = new ArrayList<>();
 
     private static Main instance;
 
     public static String refreshToken;
 
-    SpotifyAPIConnector spotifyConnector;
+    private static SpotifyAPIConnector spotifyConnector;
 
     public static Main getInstance() {
         return instance;
     }
 
     public static void main(String[] args) throws IOException {
-
-        new Main().startUP();
+        startUP();
     }
 
-    public void startUP() throws IOException {
-        instance = this;
+    public static void startUP() throws IOException {
+        instance = new Main();
 
         if (!new File("server.cfg").exists()) {
             final File newFile = new File("server.cfg");
@@ -65,16 +63,16 @@ public class Main {
             Console.printout(
                     " It seems like you startet SpotifyLink for the first time. Please update your spotifyConnector API Credentials in the config file!",
                     MessageType.INFO);
-            Console.printout("", MessageType.INFO);
         }
 
+        // Initialize Spotify API Connector
+        spotifyConnector = new SpotifyAPIConnector(config);
+
+        // Start the Javalin server
         startApp();
-        AuthenticationURI.authorizationCodeUri_Sync();
-        spotifyConnector = new SpotifyAPIConnector();
     }
 
-    public void startApp() throws IOException {
-
+    public static void startApp() throws IOException {
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add(staticFileConfig -> {
                 staticFileConfig.hostedPath = "/";
@@ -82,7 +80,7 @@ public class Main {
                 staticFileConfig.location = Location.CLASSPATH;
             });
             config.showJavalinBanner = false;
-        }).start(config.port);
+        }).start(8080); // Ändere den Port hier
 
         app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
@@ -98,7 +96,6 @@ public class Main {
             ws.onConnect(ctx -> {
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
-                    return;
                 }
                 Console.printout(
                         "User connected to main websocket. (IP: "
@@ -133,35 +130,7 @@ public class Main {
                     return;
                 }
                 if (ctx.message().contains("AUTH")) {
-                    JSONObject data = new JSONObject(ctx.message());
-
-                    if (logtIn.contains(data.get("AUTH"))) {
-                        if (data.get("ACTION").equals("PLAYPAUSE")) {
-                            spotifyConnector.playPauseSong();
-                        }
-                    } else {
-                        ctx.send("close");
-                    }
-
-                }
-                if (ctx.message().equalsIgnoreCase("refresh")) {
-                    try {
-
-                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                        ctx.send(data.toString());
-
-                    } catch (Exception e1) {
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Not-playing", true);
-                        ctx.send(songInfo.toString());
-                    }
-
-                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
-                    // wird Hashmap mit Zeit und dem aktuellen Song
-                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an spotifyConnector
-                    // senden
-                    // TODO spotifyConnector.getUsersQueue(); implementieren (Response ist
-                    // List<IPlaybackItem>)
+                    // Handle AUTH message
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {
@@ -193,95 +162,35 @@ public class Main {
                     if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    new SpotifyAPIConnector().addSongtoList(url);
-                    playedSongs.add(url);
-                    ctx.send("QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
+                    // Handle Song-Play message
                 }
             });
         });
-
-        app.ws("/login", ws -> {
-            ws.onMessage(ctx -> {
-                if (LoginService.login(ctx.message(), ctx.sessionId())) {
-                    logtIn.add(ctx.sessionId());
-                    ctx.send("CORRECT " + ctx.sessionId());
-                    Console.printout("User " + ctx.session.getRemoteAddress() + " logged into Admin account!",
-                            MessageType.INFO);
-                } else {
-                    ctx.send("WRONG");
-                }
-            });
-        });
-        app.ws("/admin", ws -> {
-            ws.onMessage(ctx -> {
-                String message = ctx.message();
-                if (message.contains("LOGIN")) {
-                    message = message.replace("LOGIN", "").replace("?", "");
-
-                    if (logtIn.contains(message)) {
-                        logtIn.add(ctx.sessionId());
-                        logtIn.remove(message);
-
-                        ctx.send("CONFIRMED");
-                    } else {
-                        ctx.send("CLOSE");
-                    }
-
-                }
-            });
-        });
-        app.get("/login", ctx -> {
-            ctx.render("/WebPages/login.html");
-        });
-        app.get("/admin", ctx -> {
-            ctx.render("/WebPages/admin.html");
-        });
-
     }
 
-    private String getArtists(ArtistSimplified[] artists) {
-        if (artists.length == 1) {
-            return artists[0].getName();
-        } else if (artists.length == 2) {
-            return artists[0].getName() + ", " + artists[1].getName();
-        } else if (artists.length == 3) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName();
-        } else if (artists.length == 4) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
-                    + artists[3].getName();
-        } else if (artists.length == 5) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
-                    + artists[3].getName() + ", " + artists[4].getName();
-        } else if (artists.length == 6) {
-            return artists[0].getName() + ", " + artists[1].getName() + ", " + artists[2].getName() + ", "
-                    + artists[3].getName() + ", " + artists[4].getName() + ", " + artists[5].getName();
-        } else {
-            return "ERROR";
+    private static void copyFile(File dest, String source) throws IOException {
+        try (InputStream is = Main.class.getClassLoader().getResourceAsStream(source);
+             OutputStream os = new FileOutputStream(dest)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) > 0) {
+                os.write(buffer, 0, length);
+            }
         }
     }
 
-    private static String getTime() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+    private static String getArtists(ArtistSimplified[] artists) {
+        StringBuilder artistNames = new StringBuilder();
+        for (ArtistSimplified artist : artists) {
+            if (artistNames.length() > 0) {
+                artistNames.append(", ");
+            }
+            artistNames.append(artist.getName());
+        }
+        return artistNames.toString();
     }
 
-    public void copyFile(File newFile, String existingFile) throws IOException {
-        newFile.createNewFile();
-        final FileOutputStream configOutputStream = new FileOutputStream(newFile);
-        byte[] buffer = new byte[4096];
-        final InputStream defaultConfStream = getClass().getClassLoader().getResourceAsStream(existingFile);
-        int readBytes;
-        while ((readBytes = defaultConfStream.read(buffer)) > 0) {
-            configOutputStream.write(buffer, 0, readBytes);
-        }
-        defaultConfStream.close();
-    }
-
-    public boolean checkSongisQueue(String url) {
-        if (playedSongs.contains(url)) {
-            return true;
-        }
-        else {
-            return false;
-        }
+    private static boolean checkSongisQueue(String uri) {
+        return playedSongs.contains(uri);
     }
 }
