@@ -12,7 +12,9 @@ public class SpotifyHandler {
     public int getDurationtoSong(String url) {
         double lengthInSeconds = 0.0;
         List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
-        
+        if (userQueue.isEmpty() || userQueue == null) {
+            return -1;
+        }
         try {
             lengthInSeconds += (double) spotifyAPI.getCurrentTrackItem().getDurationMs() / 1000;
         } catch(Exception e) {

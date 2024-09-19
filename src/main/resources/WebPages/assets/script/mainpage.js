@@ -33,7 +33,11 @@ function setupWebSocket() {
     ws.onmessage = messageEvent => {
         if (messageEvent.data.includes("QUEUE-LENGTH: ")){
             let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
-            document.getElementById("song-added").innerHTML = "Lied spielt in ca. " + queueLength + " min";
+            if (queueLength == -1) {
+                document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
+            } else {
+                document.getElementById("song-added").innerHTML = "Lied spielt in ca. " + queueLength + " min";
+            }
             return;
         }
         let wsinput = JSON.parse(messageEvent.data);

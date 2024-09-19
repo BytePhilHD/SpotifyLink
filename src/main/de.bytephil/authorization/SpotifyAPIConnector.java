@@ -192,6 +192,9 @@ public class SpotifyAPIConnector {
 
     public Track getCurrentTrackItem() throws IOException, SpotifyWebApiException, ParseException {
         IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
+        if (playlistItem == null) {
+            return null;
+        }
         if (playlistItem instanceof Track) {
             return (Track) playlistItem;
         } else {

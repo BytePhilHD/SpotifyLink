@@ -155,24 +155,16 @@ public class Main {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
                             ctx.send(data.toString());
-                        }
-                    } catch (Exception e1) {
-                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
-                            SpotifyAPIConnector.refreshToken();
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
                             ctx.send(songInfo.toString());
                         }
+                    } catch (Exception e1) {
+                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
+                            SpotifyAPIConnector.refreshToken();
+                        }
                     }
-
-                    // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
-                    // wird Hashmap mit Zeit und dem aktuellen Song
-                    // TODO dann überprüfen ob Zeit unter 3 sek war und sonst abfrage an
-                    // spotifyConnector
-                    // senden
-                    // TODO spotifyConnector.getUsersQueue(); implementieren (Response ist
-                    // List<IPlaybackItem>)
                 } else if (ctx.message().contains("Search:")) {
                     String searchQuery = ctx.message().replace("Search: ", "");
                     if (searchQuery.equalsIgnoreCase("")) {
