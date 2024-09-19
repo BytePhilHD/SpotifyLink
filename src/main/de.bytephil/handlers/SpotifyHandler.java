@@ -1,12 +1,13 @@
 package handlers;
 
 import authorization.SpotifyAPIConnector;
+import main.Main;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import java.util.List;
 
 public class SpotifyHandler {
     
-    private SpotifyAPIConnector spotifyAPI = new SpotifyAPIConnector();
+    private SpotifyAPIConnector spotifyAPI = Main.spotifyConnector;
 
     public int getDurationtoSong(String url) {
         double lengthInSeconds = 0.0;

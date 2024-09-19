@@ -42,7 +42,9 @@ public class Main {
 
     public static String refreshToken;
 
-    private static SpotifyAPIConnector spotifyConnector;
+    public static SpotifyAPIConnector spotifyConnector;
+
+    private static SpotifyHandler spotifyAPIHandler;
 
     public static Main getInstance() {
         return instance;
@@ -72,13 +74,11 @@ public class Main {
                     MessageType.INFO);
         }
 
-        // Initialize Spotify API Connector
-        spotifyConnector = new SpotifyAPIConnector();
-
         // Start the Javalin server
         startApp();
         AuthenticationURI.authorizationCodeUri_Sync();
         spotifyConnector = new SpotifyAPIConnector();
+        spotifyAPIHandler = new SpotifyHandler();
     }
 
     public static void startApp() throws IOException {
@@ -117,9 +117,9 @@ public class Main {
                     JSONObject data = spotifyConnector.getCurrentTrackInfo();
                     if (data != null) {
                         ctx.send(data.toString());
-                    } 
+                    }
                 } catch (Exception e1) {
-                    if (e1.getMessage().contains("The access token expired")) {
+                    if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
                         SpotifyAPIConnector.refreshToken();
                     }
                 }
@@ -134,7 +134,6 @@ public class Main {
                         MessageType.INFO);
             });
             ws.onMessage(ctx -> {
-                SpotifyHandler spotifyAPIHandler = new SpotifyHandler();
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                     return;
@@ -153,16 +152,18 @@ public class Main {
                 }
                 if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {
-
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
                             ctx.send(data.toString());
                         }
-
-                    } catch (IOException | ParseException | SpotifyWebApiException e1) {
-                        JSONObject songInfo = new JSONObject();
-                        songInfo.put("Not-playing", true);
-                        ctx.send(songInfo.toString());
+                    } catch (Exception e1) {
+                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
+                            SpotifyAPIConnector.refreshToken();
+                        } else {
+                            JSONObject songInfo = new JSONObject();
+                            songInfo.put("Not-playing", true);
+                            ctx.send(songInfo.toString());
+                        }
                     }
 
                     // TODO Cache damit nicht immer neue Abfrage von SpotifyAPIConnector gemacht
@@ -203,7 +204,7 @@ public class Main {
                     if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
-                    new SpotifyAPIConnector().addSongtoList(url);
+                    spotifyConnector.addSongtoList(url);
                     playedSongs.add(url);
                     ctx.send("QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
                 }
