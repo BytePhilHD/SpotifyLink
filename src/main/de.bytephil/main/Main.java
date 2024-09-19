@@ -86,7 +86,7 @@ public class Main {
                 staticFileConfig.location = Location.CLASSPATH;
             });
             javalinConfig.showJavalinBanner = false;
-        }).start(8080);
+        }).start(config.port);
 
         app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
