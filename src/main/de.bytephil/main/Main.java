@@ -8,8 +8,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.apache.hc.core5.http.ParseException;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import authorization.AuthenticationURI;
@@ -21,7 +19,6 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsConnectContext;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -89,7 +86,7 @@ public class Main {
                 staticFileConfig.location = Location.CLASSPATH;
             });
             javalinConfig.showJavalinBanner = false;
-        }).start(8080); // Ändere den Port hier
+        }).start(8080);
 
         app.ws("/auth", ws -> {
             ws.onConnect(ctx -> {
