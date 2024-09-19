@@ -6,6 +6,8 @@ let uri2;
 let uri3;
 let sentValue;
 
+let songAdded;
+
 
 function hideSearch() {
     document.getElementById("search-1-button").style.visibility = "hidden";
@@ -31,9 +33,13 @@ function setupWebSocket() {
 
     hideSearch();
     ws.onmessage = messageEvent => {
-        if (messageEvent.data.includes("QUEUE-LENGTH: ")){
+        if (messageEvent.data.includes("QUEUE-LENGTH: ")) {
             let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
-            document.getElementById("song-added").innerHTML = "Lied spielt in ca. " + queueLength + " min";
+            if (queueLength == -1) {
+                document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
+            } else {
+                document.getElementById("song-added").innerHTML = "Lied spielt in ca. " + queueLength + " min";
+            }
             return;
         }
         let wsinput = JSON.parse(messageEvent.data);
@@ -72,10 +78,10 @@ function setupWebSocket() {
                 uri1 = search1["uri"];
                 var button1 = document.getElementById("search-1-button");
                 if (search1["played"] == true) {
-                    button1.style.backgroundColor = "#FFA500"; 
+                    button1.style.backgroundColor = "#FFA500";
                     button1.style.borderColor = "#FFA500";
                 } else {
-                    button1.style.backgroundColor = ""; 
+                    button1.style.backgroundColor = "";
                     button1.style.borderColor = "";
                 }
             }
@@ -91,10 +97,10 @@ function setupWebSocket() {
                 uri2 = search2["uri"];
                 var button2 = document.getElementById("search-2-button");
                 if (search2["played"] == true) {
-                    button2.style.backgroundColor = "#FFA500"; 
+                    button2.style.backgroundColor = "#FFA500";
                     button2.style.borderColor = "#FFA500";
                 } else {
-                    button2.style.backgroundColor = ""; 
+                    button2.style.backgroundColor = "";
                     button2.style.borderColor = "";
                 }
             }
@@ -110,14 +116,14 @@ function setupWebSocket() {
                 uri3 = search3["uri"];
                 var button3 = document.getElementById("search-3-button");
                 if (search3["played"] == true) {
-                    button3.style.backgroundColor = "#FFA500"; 
+                    button3.style.backgroundColor = "#FFA500";
                     button3.style.borderColor = "#FFA500";
                 } else {
-                    button3.style.backgroundColor = ""; 
+                    button3.style.backgroundColor = "";
                     button3.style.borderColor = "";
                 }
             }
-        }        
+        }
     }
     ws.onclose = closeEvent => {
         if (ws.readyState == 0) {
@@ -132,20 +138,23 @@ function setupWebSocket() {
 document.getElementById('search-1-button').onclick = function () {
     ws.send("Song-Play: " + uri1);
     hideSearch();
-    document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    document.getElementById("song-added").innerHTML = "Song wird hinzugefügt...";
     sentValue = document.querySelector('#searchbar').value;
+    songAdded = true;
 }
 document.getElementById('search-2-button').onclick = function () {
     ws.send("Song-Play: " + uri2);
     hideSearch();
-    document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    document.getElementById("song-added").innerHTML = "Song wird hinzugefügt...";
     sentValue = document.querySelector('#searchbar').value;
+    songAdded = true;
 }
 document.getElementById('search-3-button').onclick = function () {
     ws.send("Song-Play: " + uri3);
     hideSearch();
-    document.getElementById("song-added").innerHTML = "Song wurde hinzugefügt!";
+    document.getElementById("song-added").innerHTML = "Song wird hinzugefügt...";
     sentValue = document.querySelector('#searchbar').value;
+    songAdded = true;
 }
 document.getElementById('song-cover').onclick = function () {
     location.href = url;
@@ -166,9 +175,20 @@ const input = document.querySelector('#searchbar');
 
 input.addEventListener('change', updateValue);
 
+let counter = 0;
 function updateValue() {
     if (input.value !== null && input.value !== "") {
         ws.send("Search: " + input.value);
+    }
+    if (songAdded) {
+        if (counter == 3) {
+            document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
+            counter = 0;
+            songAdded = false;
+            return;
+        } else {
+            counter++;
+        }
     }
 }
 
