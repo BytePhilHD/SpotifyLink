@@ -169,6 +169,16 @@ function refresh() {
     if (input.value !== null && input.value !== "") {
         ws.send("Search: " + input.value);
     }
+    if (songAdded) {
+        if (counter == 3) {
+            document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
+            counter = 0;
+            songAdded = false;
+            return;
+        } else {
+            counter++;
+        }
+    }
 }
 
 const input = document.querySelector('#searchbar');
@@ -179,16 +189,6 @@ let counter = 0;
 function updateValue() {
     if (input.value !== null && input.value !== "") {
         ws.send("Search: " + input.value);
-    }
-    if (songAdded) {
-        if (counter == 3) {
-            document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
-            counter = 0;
-            songAdded = false;
-            return;
-        } else {
-            counter++;
-        }
     }
 }
 

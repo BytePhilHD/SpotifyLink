@@ -25,6 +25,7 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import services.LoginService;
 import utils.ServerConfiguration;
+import io.javalin.rendering.template.JavalinJte;
 
 public class Main {
 
@@ -82,10 +83,11 @@ public class Main {
         Javalin app = Javalin.create(javalinConfig -> {
             javalinConfig.staticFiles.add(staticFileConfig -> {
                 staticFileConfig.hostedPath = "/";
-                staticFileConfig.directory = "WebPages";
+                staticFileConfig.directory = "/WebPages";
                 staticFileConfig.location = Location.CLASSPATH;
             });
             javalinConfig.showJavalinBanner = false;
+            javalinConfig.fileRenderer(new JavalinJte());
         }).start(config.port);
 
         app.ws("/auth", ws -> {
@@ -229,6 +231,13 @@ public class Main {
 
                 }
             });
+        });
+        app.get("/login", ctx -> {
+            ctx.render("login.html");
+        });
+    
+        app.get("/admin", ctx -> {
+            ctx.render("admin.html");
         });
     }
 
