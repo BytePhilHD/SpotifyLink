@@ -47,6 +47,8 @@ public class Main {
         return instance;
     }
 
+    private static boolean isRunning = true;
+
     public static void main(String[] args) throws IOException {
         startUP();
     }
@@ -103,21 +105,24 @@ public class Main {
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                 }
-                Console.printout(
-                        "User connected to main websocket. (IP: "
-                                + (ctx.session.getRemoteAddress() != null
-                                        ? ctx.session.getRemoteAddress().toString().replace("/", "")
-                                        : "unknown")
-                                + ")",
-                        MessageType.INFO);
-                try {
-                    JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                    if (data != null) {
-                        ctx.send(data.toString());
-                    }
-                } catch (Exception e1) {
-                    if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
-                        SpotifyAPIConnector.refreshToken();
+                if (isRunning == true) {
+
+                    Console.printout(
+                            "User connected to main websocket. (IP: "
+                                    + (ctx.session.getRemoteAddress() != null
+                                            ? ctx.session.getRemoteAddress().toString().replace("/", "")
+                                            : "unknown")
+                                    + ")",
+                            MessageType.INFO);
+                    try {
+                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
+                        if (data != null) {
+                            ctx.send(data.toString());
+                        }
+                    } catch (Exception e1) {
+                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
+                            SpotifyAPIConnector.refreshToken();
+                        }
                     }
                 }
             });
@@ -145,11 +150,19 @@ public class Main {
                             spotifyConnector.songVorward();
                         } else if (data.get("ACTION").equals("BACK")) {
                             spotifyConnector.songBack();
+                        } else if (data.get("ACTION").equals("TOGGLE-STATE")) {
+                            isRunning = !isRunning;
                         }
                     } else {
                         ctx.send("close");
                     }
 
+                } else if (isRunning == false) {
+                    JSONObject songInfo = new JSONObject();
+                    songInfo.put("Not-playing", true);
+                    ctx.send(songInfo.toString());
+                    ctx.closeSession();
+                    return;
                 }
                 if (ctx.message().equalsIgnoreCase("refresh")) {
                     try {

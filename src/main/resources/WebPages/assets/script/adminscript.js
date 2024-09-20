@@ -165,3 +165,8 @@ document.getElementById("vorward-button").onclick = function () {
   ws.send(JSON.stringify(data));
   console.log("SENT " + JSON.stringify(data));
 };
+document.getElementById("toggle-state").onclick = function () {
+    data.ACTION = "TOGGLE-STATE";
+    ws.send(JSON.stringify(data));
+    console.log("SENT " + JSON.stringify(data));
+  };

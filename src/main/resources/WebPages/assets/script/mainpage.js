@@ -39,6 +39,7 @@ function setupWebSocket() {
                 document.getElementById("song-added").innerHTML = "Fehler beim Hinzufügen des Songs!";
             } else {
                 document.getElementById("song-added").innerHTML = "Lied spielt in ca. " + queueLength + " min";
+                songAdded = false;
             }
             return;
         }
@@ -161,6 +162,8 @@ document.getElementById('song-cover').onclick = function () {
 }
 
 // refresh function which gets timed every 1000 ms (on the top)
+let counter = 0;
+
 function refresh() {
     if (ws.readyState == 0) {
         return;
@@ -185,7 +188,6 @@ const input = document.querySelector('#searchbar');
 
 input.addEventListener('change', updateValue);
 
-let counter = 0;
 function updateValue() {
     if (input.value !== null && input.value !== "") {
         ws.send("Search: " + input.value);
