@@ -25,7 +25,6 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 import services.LoginService;
 import utils.ServerConfiguration;
-import io.javalin.rendering.template.JavalinJte;
 
 public class Main {
 
@@ -87,7 +86,6 @@ public class Main {
                 staticFileConfig.location = Location.CLASSPATH;
             });
             javalinConfig.showJavalinBanner = false;
-            javalinConfig.fileRenderer(new JavalinJte());
         }).start(config.port);
 
         app.ws("/auth", ws -> {
@@ -143,6 +141,10 @@ public class Main {
                     if (logtIn.contains((String) data.get("AUTH"))) {
                         if (data.get("ACTION").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
+                        } else if (data.get("ACTION").equals("NEXT")) {
+                            spotifyConnector.songVorward();
+                        } else if (data.get("ACTION").equals("BACK")) {
+                            spotifyConnector.songBack();
                         }
                     } else {
                         ctx.send("close");
@@ -231,13 +233,6 @@ public class Main {
 
                 }
             });
-        });
-        app.get("/login", ctx -> {
-            ctx.render("login.html");
-        });
-    
-        app.get("/admin", ctx -> {
-            ctx.render("admin.html");
         });
     }
 
