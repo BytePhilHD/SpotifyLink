@@ -58,6 +58,9 @@ function setupWebSocket() {
     if (wsinput["uri"] !== undefined) {
       url = wsinput["uri"];
     }
+    if (wsinput["user"] !== undefined) {
+      document.getElementById("username").innerHTML = wsinput["user"];
+    }
 
     if (wsinput["Not-playing"]) {
       document.getElementById("song-name").innerHTML = "Kein Song läuft";

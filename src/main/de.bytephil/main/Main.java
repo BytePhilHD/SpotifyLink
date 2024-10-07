@@ -106,7 +106,6 @@ public class Main {
                     ctx.closeSession();
                 }
                 if (isRunning == true) {
-
                     Console.printout(
                             "User connected to main websocket. (IP: "
                                     + (ctx.session.getRemoteAddress() != null
@@ -144,6 +143,7 @@ public class Main {
                     JSONObject data = new JSONObject(ctx.message());
 
                     if (logtIn.contains((String) data.get("AUTH"))) {
+
                         if (data.get("ACTION").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
                         } else if (data.get("ACTION").equals("NEXT")) {
@@ -168,10 +168,12 @@ public class Main {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
+                            data.put("user", spotifyConnector.getUserName());
                             ctx.send(data.toString());
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
+                            songInfo.put("user", spotifyConnector.getUserName());
                             ctx.send(songInfo.toString());
                         }
                     } catch (Exception e1) {
@@ -226,24 +228,6 @@ public class Main {
                             MessageType.INFO);
                 } else {
                     ctx.send("WRONG");
-                }
-            });
-        });
-        app.ws("/admin", ws -> {
-            ws.onMessage(ctx -> {
-                String message = ctx.message();
-                if (message.contains("LOGIN")) {
-                    message = message.replace("LOGIN", "").replace("?", "");
-
-                    if (logtIn.contains(message)) {
-                        logtIn.add(ctx.sessionId());
-                        logtIn.remove(message);
-
-                        ctx.send("CONFIRMED");
-                    } else {
-                        ctx.send("CLOSE");
-                    }
-
                 }
             });
         });
