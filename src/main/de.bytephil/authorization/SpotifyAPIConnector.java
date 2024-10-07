@@ -108,6 +108,15 @@ public class SpotifyAPIConnector {
         }
     }
 
+    public String getUserName() {
+        try {
+            return spotifyApi.getCurrentUsersProfile().build().execute().getDisplayName();
+        } catch (Exception e1) {
+            Console.printout("Error in getUserName: " + e1.getMessage(), MessageType.ERROR);
+            return null;
+        }
+    }
+
     public String getURL() {
         try {
             return getCurrentTrackItem().getUri();
