@@ -37,6 +37,10 @@ public class AuthenticationURI {
         Console.printout("Link to authenticate: " + uri.toString(), MessageType.INFO);
     }
 
+    public static String getAuthorizationURL() {
+        return authorizationCodeUriRequest.execute().toString();
+    }
+
     public static void authorizationCodeUri_Async() {
         try {
             final CompletableFuture<URI> uriFuture = authorizationCodeUriRequest.executeAsync();

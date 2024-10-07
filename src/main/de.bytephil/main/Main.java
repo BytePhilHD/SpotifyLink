@@ -152,6 +152,10 @@ public class Main {
                             spotifyConnector.songBack();
                         } else if (data.get("ACTION").equals("TOGGLE-STATE")) {
                             isRunning = !isRunning;
+                        } else if (data.get("ACTION").equals("CHANGEUSER")) {
+                            JSONObject authJsonObject = new JSONObject();
+                            authJsonObject.put("auth-url", AuthenticationURI.getAuthorizationURL());
+                            ctx.send(authJsonObject.toString());
                         }
                     } else {
                         ctx.send("close");
