@@ -61,6 +61,9 @@ function setupWebSocket() {
     if (wsinput["user"] !== undefined) {
       document.getElementById("username").innerHTML = wsinput["user"];
     }
+    if (wsinput["auth-url"] !== undefined) {
+      window.location.href = wsinput["auth-url"];
+    }
 
     if (wsinput["Not-playing"]) {
       document.getElementById("song-name").innerHTML = "Kein Song läuft";
@@ -156,20 +159,21 @@ let data = {
 document.getElementById("back-button").onclick = function () {
   data.ACTION = "BACK";
   ws.send(JSON.stringify(data));
-  console.log("SENT " + JSON.stringify(data));
 };
 document.getElementById("play-button").onclick = function () {
   data.ACTION = "PLAYPAUSE";
   ws.send(JSON.stringify(data));
-  console.log("SENT " + JSON.stringify(data));
 };
 document.getElementById("vorward-button").onclick = function () {
   data.ACTION = "NEXT";
   ws.send(JSON.stringify(data));
-  console.log("SENT " + JSON.stringify(data));
 };
 document.getElementById("toggle-state").onclick = function () {
-    data.ACTION = "TOGGLE-STATE";
-    ws.send(JSON.stringify(data));
-    console.log("SENT " + JSON.stringify(data));
-  };
+  data.ACTION = "TOGGLE-STATE";
+  ws.send(JSON.stringify(data));
+};
+
+document.getElementById("change-user-button").onclick = function () {
+  data.ACTION = "CHANGEUSER";
+  ws.send(JSON.stringify(data));
+};
