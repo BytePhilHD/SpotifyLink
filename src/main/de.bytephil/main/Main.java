@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.hc.core5.http.ParseException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +41,8 @@ public class Main {
     private static final ArrayList<String> logtIn = new ArrayList<>();
     public static ArrayList<String> blockedUsers = new ArrayList<>();
     private static final ArrayList<String> playedSongs = new ArrayList<>();
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static Main instance;
 
@@ -185,6 +188,11 @@ public class Main {
                                 data.put("user", spotifyConnector.getUserName());
                             } else if (content.contains("Queue")) {
                                 data.put("user", "User");
+                                String jsonString = objectMapper.writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
+                                JSONObject response = new JSONObject();
+                                response.put("type", "queue");
+                                response.put("results", new JSONArray(jsonString));
+                                ctx.send(response.toString());
                             }
                             ctx.send(data.toString());
                         } else {
@@ -211,7 +219,6 @@ public class Main {
                     try {
                         Paging<Track> trackPaging = SearchRequest.searchRequest(searchQuery);
                         List<SongObject> songList = new ArrayList<>();
-                        ObjectMapper objectMapper = new ObjectMapper();
 
                         for (int i = 0; i < 3; i++) {
                             SongObject songObject = new SongObject(
@@ -223,12 +230,14 @@ public class Main {
 
                             songList.add(songObject);
                         }
-
                         String jsonString = objectMapper.writeValueAsString(songList);
-
-                        ctx.send(jsonString);
+                        JSONObject response = new JSONObject();
+                        response.put("type", "search");
+                        response.put("results", new JSONArray(jsonString));
+                        ctx.send(response.toString());
                         userSearch.put(ctx.sessionId(), ctx.message());
                     } catch (Exception e1) {
+                        e1.printStackTrace();
                     }
                 } else if (ctx.message().contains("Song-Play")) {
                     String url = ctx.message().replace("Song-Play: ", "");
