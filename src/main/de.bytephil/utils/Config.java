@@ -10,7 +10,6 @@ public class Config {
     public String webaddress;
 
     public String password;
-    public String username;
     public boolean debugMSG;
     public String address;
 

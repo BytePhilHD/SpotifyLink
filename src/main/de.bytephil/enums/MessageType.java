@@ -1,5 +1,5 @@
 package enums;
 
 public enum MessageType {
-    INFO,WARNING,ERROR,DEBUG;
+    INFO, WARNING, ERROR, DEBUG;
 }
