@@ -7,12 +7,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.hc.core5.http.ParseException;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import authorization.AuthenticationURI;
 import authorization.SpotifyAPIConnector;
+import entities.SongObject;
 import enums.MessageType;
 import handlers.SearchRequest;
 import handlers.SpotifyHandler;
@@ -172,12 +176,15 @@ public class Main {
                     ctx.send(songInfo.toString());
                     return;
                 }
-                if (ctx.message().contains("refresh")) {
+                final String content = ctx.message();
+                if (content.contains("refresh")) {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
-                            if (ctx.message().equals("refresh-Admin")) {
+                            if (content.equals("refresh-Admin")) {
                                 data.put("user", spotifyConnector.getUserName());
+                            } else if (content.contains("Queue")) {
+                                data.put("user", "User");
                             }
                             ctx.send(data.toString());
                         } else {
@@ -203,17 +210,23 @@ public class Main {
                     }
                     try {
                         Paging<Track> trackPaging = SearchRequest.searchRequest(searchQuery);
-                        JSONObject searchResults = new JSONObject();
+                        List<SongObject> songList = new ArrayList<>();
+                        ObjectMapper objectMapper = new ObjectMapper();
+
                         for (int i = 0; i < 3; i++) {
-                            JSONObject trackInfo = new JSONObject();
-                            trackInfo.put("name", trackPaging.getItems()[i].getName());
-                            trackInfo.put("artists", getArtists(trackPaging.getItems()[i].getArtists()));
-                            trackInfo.put("cover", trackPaging.getItems()[i].getAlbum().getImages()[0].getUrl());
-                            trackInfo.put("uri", trackPaging.getItems()[i].getUri());
-                            trackInfo.put("played", checkSongisQueue(trackPaging.getItems()[i].getUri()));
-                            searchResults.put("search-" + (i + 1), trackInfo);
+                            SongObject songObject = new SongObject(
+                                    trackPaging.getItems()[i].getName(),
+                                    getArtists(trackPaging.getItems()[i].getArtists()),
+                                    trackPaging.getItems()[i].getAlbum().getImages()[0].getUrl(),
+                                    trackPaging.getItems()[i].getUri(),
+                                    checkSongisQueue(trackPaging.getItems()[i].getUri()));
+
+                            songList.add(songObject);
                         }
-                        ctx.send(searchResults.toString());
+
+                        String jsonString = objectMapper.writeValueAsString(songList);
+
+                        ctx.send(jsonString);
                         userSearch.put(ctx.sessionId(), ctx.message());
                     } catch (Exception e1) {
                     }
