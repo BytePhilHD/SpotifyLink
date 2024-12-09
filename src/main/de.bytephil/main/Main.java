@@ -165,18 +165,20 @@ public class Main {
                         ctx.send("close");
                     }
 
-                } else if (isRunning == false) {
+                }
+                if (isRunning == false) {
                     JSONObject songInfo = new JSONObject();
                     songInfo.put("Not-playing", true);
                     ctx.send(songInfo.toString());
-                    ctx.closeSession();
                     return;
                 }
-                if (ctx.message().equalsIgnoreCase("refresh")) {
+                if (ctx.message().contains("refresh")) {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
-                            data.put("user", spotifyConnector.getUserName());
+                            if (ctx.message().equals("refresh-Admin")) {
+                                data.put("user", spotifyConnector.getUserName());
+                            }
                             ctx.send(data.toString());
                         } else {
                             JSONObject songInfo = new JSONObject();
