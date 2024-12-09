@@ -1,27 +1,27 @@
 package handlers;
 
-import main.Main;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
-import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.model_objects.specification.Paging;
-import se.michaelthelin.spotify.model_objects.specification.Track;
-import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
-import org.apache.hc.core5.http.ParseException;
-
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.apache.hc.core5.http.ParseException;
+
+import main.Main;
+import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
+import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.Track;
+import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
+
 public class SearchRequest {
-    private static final String clientId = Main.config.clientID;
-    private static final String clientSecret = Main.config.clientSecret;
+    private static final String CLIENT_ID = Main.config.clientID;
+    private static final String CLIENT_SECRET = Main.config.clientSecret;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
-            .setClientId(clientId)
-            .setClientSecret(clientSecret)
+            .setClientId(CLIENT_ID)
+            .setClientSecret(CLIENT_SECRET)
             .build();
     private static final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials()
             .build();
@@ -40,7 +40,6 @@ public class SearchRequest {
         return null;
     }
 
-
     public static void clientCredentials_Sync(String searchrequest) {
         try {
             final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
@@ -53,7 +52,7 @@ public class SearchRequest {
             String answer = trackPaging.toString();
 
             int iend = answer.indexOf("id=");
-            String id = answer.substring(iend+3, iend+25);
+            String id = answer.substring(iend + 3, iend + 25);
 
             System.out.println("ID: " + id);
             System.out.println(answer);
@@ -66,7 +65,8 @@ public class SearchRequest {
 
     public static void clientCredentials_Async() {
         try {
-            final CompletableFuture<ClientCredentials> clientCredentialsFuture = clientCredentialsRequest.executeAsync();
+            final CompletableFuture<ClientCredentials> clientCredentialsFuture = clientCredentialsRequest
+                    .executeAsync();
 
             // Thread free to do other tasks...
 
