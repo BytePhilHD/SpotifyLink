@@ -5,6 +5,7 @@ let uri1;
 let uri2;
 let uri3;
 let sentValue;
+let refreshQueue = false;
 
 let songAdded;
 
@@ -44,67 +45,73 @@ function setupWebSocket() {
       }
       return;
     }
-    let wsinput = JSON.parse(messageEvent.data);
+    try {
+      let wsinput = JSON.parse(messageEvent.data);
 
-    if (wsinput["name"] !== undefined) {
-      document.getElementById("song-name").innerHTML = wsinput["name"];
-    }
+      if (wsinput["name"] !== undefined) {
+        document.getElementById("song-name").innerHTML = wsinput["name"];
+      }
 
-    if (wsinput["artists"] !== undefined) {
-      document.getElementById("song-artists").innerHTML = wsinput["artists"];
-    }
+      if (wsinput["artists"] !== undefined) {
+        document.getElementById("song-artists").innerHTML = wsinput["artists"];
+      }
 
-    if (wsinput["cover"] !== undefined) {
-      document.getElementById("song-cover").src = wsinput["cover"];
-    }
+      if (wsinput["cover"] !== undefined) {
+        document.getElementById("song-cover").src = wsinput["cover"];
+      }
 
-    if (wsinput["uri"] !== undefined) {
-      url = wsinput["uri"];
-    }
+      if (wsinput["uri"] !== undefined) {
+        url = wsinput["uri"];
+      }
 
-    if (wsinput["Not-playing"]) {
-      document.getElementById("song-name").innerHTML = "Kein Song läuft";
-      document.getElementById("song-artists").innerHTML = "...";
-    }
-    if (document.querySelector("#searchbar").value != sentValue) {
-      for (let i = 1; i <= 3; i++) {
-        if (wsinput.hasOwnProperty(`search-${i}`)) {
-          let search = wsinput[`search-${i}`];
-          document.getElementById(`search-${i}-name`).style.visibility =
-            "visible";
-          document.getElementById(`search-${i}-name`).innerHTML =
-            search["name"];
-          document.getElementById("song-added").innerHTML = " ";
-          document.getElementById(`search-${i}-artists`).style.visibility =
-            "visible";
-          document.getElementById(`search-${i}-artists`).innerHTML =
-            search["artists"];
-          document.getElementById(`search-${i}-cover`).style.visibility =
-            "visible";
-          document.getElementById(`search-${i}-cover`).src = search["cover"];
-          document.getElementById(`search-${i}-button`).style.visibility =
-            "visible";
-          window[`uri${i}`] = search["uri"];
-          var button = document.getElementById(`search-${i}-button`);
-          if (search["played"] == true) {
-            button.style.backgroundColor = "#FFA500";
-            button.style.borderColor = "#FFA500";
-          } else {
-            button.style.backgroundColor = "";
-            button.style.borderColor = "";
+      if (wsinput["Not-playing"]) {
+        document.getElementById("song-name").innerHTML = "Kein Song läuft";
+        document.getElementById("song-artists").innerHTML = "...";
+      }
+      if (document.querySelector("#searchbar").value != sentValue) {
+        let searchResults = wsinput;
+
+        for (let i = 1; i <= 3; i++) {
+          if (searchResults[i - 1]) {
+            let search = searchResults[i - 1];
+            document.getElementById(`search-${i}-name`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-name`).innerHTML = search.name;
+            document.getElementById("song-added").innerHTML = " ";
+            document.getElementById(`search-${i}-artists`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-artists`).innerHTML =
+              search.artists;
+            document.getElementById(`search-${i}-cover`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-cover`).src = search.cover;
+            document.getElementById(`search-${i}-button`).style.visibility =
+              "visible";
+            window[`uri${i}`] = search.uri;
+            var button = document.getElementById(`search-${i}-button`);
+            if (search.played == true) {
+              button.style.backgroundColor = "#FFA500";
+              button.style.borderColor = "#FFA500";
+            } else {
+              button.style.backgroundColor = "";
+              button.style.borderColor = "";
+            }
+          }
+        }
+
+        for (let i = 1; i <= 3; i++) {
+          if (wsinput.hasOwnProperty(`queue-${i}`)) {
+            let queue = wsinput[`queue-${i}`];
+            document.getElementById(`queue-${i}-name`).innerHTML =
+              queue["name"];
+            document.getElementById(`queue-${i}-artists`).innerHTML =
+              queue["artists"];
+            document.getElementById(`queue-${i}-cover`).src = queue["cover"];
           }
         }
       }
-
-      for (let i = 1; i <= 3; i++) {
-        if (wsinput.hasOwnProperty(`queue-${i}`)) {
-          let queue = wsinput[`queue-${i}`];
-          document.getElementById(`queue-${i}-name`).innerHTML = queue["name"];
-          document.getElementById(`queue-${i}-artists`).innerHTML =
-            queue["artists"];
-          document.getElementById(`queue-${i}-cover`).src = queue["cover"];
-        }
-      }
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
     }
   };
   ws.onclose = (closeEvent) => {
@@ -143,14 +150,34 @@ function updateValue() {
   }
 }
 
-// refresh function which gets timed every 2000 ms (on the top)
+document.getElementById("queueToggle").onclick = function () {
+  refreshQueue = !refreshQueue;
+  refresh();
+  var content = document.getElementById("queueContent");
+  var help = document.getElementById("help");
+  var arrow = document.getElementById("queueArrow");
+  if (content.style.display === "none") {
+    content.style.display = "block";
+    help.style.display = "none";
+    arrow.innerHTML = "&#9650;";
+  } else {
+    content.style.display = "none";
+    help.style.display = "block";
+    arrow.innerHTML = "&#9660;";
+  }
+};
+
 let counter = 0;
 
 function refresh() {
   if (ws.readyState == 0) {
     return;
   }
-  ws.send("refresh");
+  if (refreshQueue) {
+    ws.send("refresh Queue");
+  } else {
+    ws.send("refresh");
+  }
   if (input.value !== null && input.value !== "") {
     ws.send("Search: " + input.value);
   }

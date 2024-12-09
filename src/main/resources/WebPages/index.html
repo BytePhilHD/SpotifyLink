@@ -172,21 +172,6 @@
         `;
     }
 
-    document.getElementById("queueToggle").onclick = function () {
-        var content = document.getElementById("queueContent");
-        var help = document.getElementById("help");
-        var arrow = document.getElementById("queueArrow");
-        if (content.style.display === "none") {
-            content.style.display = "block";
-            help.style.display = "none";
-            arrow.innerHTML = "&#9650;";
-        } else {
-            content.style.display = "none";
-            help.style.display = "block";
-            arrow.innerHTML = "&#9660;";
-        }
-    };
-
     const songSelectionContainer = document.getElementById('song-selection-container');
     const queueContainer = document.getElementById('queue-container');
 
