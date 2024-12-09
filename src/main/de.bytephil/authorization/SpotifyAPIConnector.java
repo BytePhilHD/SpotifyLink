@@ -24,8 +24,8 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
 
 public class SpotifyAPIConnector {
-    private static final String clientId = Main.config.clientID;
-    private static final String clientSecret = Main.config.clientSecret;
+    private static final String CLIENT_ID = Main.config.clientID;
+    private static final String CLIENT_SECRET = Main.config.clientSecret;
     private static final URI redirectUri = SpotifyHttpManager.makeUri(Main.config.webaddress + "auth.html");
     public static String code = "";
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
@@ -34,8 +34,8 @@ public class SpotifyAPIConnector {
     private JSONObject cachedSong;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
-            .setClientId(clientId)
-            .setClientSecret(clientSecret)
+            .setClientId(CLIENT_ID)
+            .setClientSecret(CLIENT_SECRET)
             .setRedirectUri(redirectUri)
             .build();
 
