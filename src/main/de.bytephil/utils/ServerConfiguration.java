@@ -1,12 +1,12 @@
 package utils;
 
-import enums.MessageType;
-import services.Console;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import enums.MessageType;
+import services.Console;
 
 public class ServerConfiguration extends Config {
     public boolean loaded = true;
@@ -34,7 +34,6 @@ public class ServerConfiguration extends Config {
 
         port = Integer.parseInt(prop.getProperty("http.port", "80"));
         password = prop.getProperty("password", "YourPW!");
-        username = prop.getProperty("adminusername", "admin");
         debugMSG = Boolean.parseBoolean(prop.getProperty("debugMSG", "false"));
         address = prop.getProperty("webaddress", "https://bytephil.de/");
 

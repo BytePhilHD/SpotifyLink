@@ -23,9 +23,15 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
-  ws = new WebSocket(
-    "wss://" + location.hostname + ":" + location.port + "/main"
-  );
+  if (location.protocol === "http:") {
+    ws = new WebSocket(
+      "ws://" + location.hostname + ":" + location.port + "/main"
+    );
+  } else {
+    ws = new WebSocket(
+      "wss://" + location.hostname + ":" + location.port + "/main"
+    );
+  }
 
   setInterval(refresh, 2000);
 
