@@ -144,7 +144,7 @@ document.getElementById("search-3-button").onclick = function () {
 
 // refresh function which gets timed every 1000 ms (on the top)
 function refresh() {
-  ws.send("refresh");
+  ws.send("refresh-Admin");
   if (input.value != null) {
     ws.send("Search: " + input.value);
   }
