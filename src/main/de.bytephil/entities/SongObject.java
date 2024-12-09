@@ -2,7 +2,6 @@ package entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 @lombok.Getter
 @lombok.Setter
 @lombok.AllArgsConstructor
@@ -10,7 +9,6 @@ public class SongObject {
 
     @JsonProperty("name")
     private String name;
-
 
     @JsonProperty("artists")
     private String artists;
@@ -23,5 +21,5 @@ public class SongObject {
 
     @JsonProperty("played")
     private boolean played;
-    
+
 }
