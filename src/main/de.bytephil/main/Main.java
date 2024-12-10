@@ -184,11 +184,12 @@ public class Main {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
-                            if (content.equals("refresh-Admin")) {
+                            if (content.contains("Admin")) {
                                 data.put("user", spotifyConnector.getUserName());
                             } else if (content.contains("Queue")) {
                                 data.put("user", "User");
-                                String jsonString = objectMapper.writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
+                                String jsonString = objectMapper
+                                        .writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
                                 JSONObject response = new JSONObject();
                                 response.put("type", "queue");
                                 response.put("results", new JSONArray(jsonString));
