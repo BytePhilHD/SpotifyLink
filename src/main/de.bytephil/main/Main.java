@@ -58,6 +58,9 @@ public class Main {
 
     private static boolean isRunning = true;
 
+    @lombok.Setter
+    private static boolean startingUp = true;
+
     public static void main(String[] args) throws IOException {
         startUP();
     }
@@ -114,7 +117,7 @@ public class Main {
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
                     ctx.closeSession();
                 }
-                if (isRunning == true) {
+                if (isRunning && !startingUp) {
                     Console.printout(
                             "User connected to main websocket. (IP: "
                                     + (ctx.session.getRemoteAddress() != null
@@ -173,7 +176,7 @@ public class Main {
                     }
 
                 }
-                if (isRunning == false) {
+                if (!isRunning || startingUp) {
                     JSONObject songInfo = new JSONObject();
                     songInfo.put("Not-playing", true);
                     ctx.send(songInfo.toString());
