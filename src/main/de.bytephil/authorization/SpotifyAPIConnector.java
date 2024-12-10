@@ -57,7 +57,7 @@ public class SpotifyAPIConnector {
             if (e.getMessage().contains("Authorization code expired")) {
                 refreshToken();
             } else {
-                Console.printout("Error at SpotifyAPIConnector: " + e.getMessage(), MessageType.ERROR);
+                Console.printError("Error at SpotifyAPIConnector", MessageType.ERROR, e);
             }
         }
     }

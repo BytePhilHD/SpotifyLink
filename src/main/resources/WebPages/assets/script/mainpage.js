@@ -9,6 +9,8 @@ let refreshQueue = false;
 
 let cachedImage;
 
+let cachedImages = {};
+
 let songAdded;
 
 function hideSearch() {
@@ -91,7 +93,10 @@ function setupWebSocket() {
             document.getElementById(`queue-${i}-name`).innerHTML = queue.name;
             document.getElementById(`queue-${i}-artists`).innerHTML =
               queue.artists;
-            document.getElementById(`queue-${i}-cover`).src = queue.cover;
+            if (queue.cover !== cachedImages[i]) {
+              document.getElementById(`queue-${i}-cover`).src = queue.cover;
+              cachedImages[i] = queue.cover;
+            }
           }
         }
       } else {

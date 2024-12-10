@@ -130,11 +130,11 @@ public class Main {
                         if (data != null) {
                             ctx.send(data.toString());
                         }
-                    } catch (IOException | ParseException | SpotifyWebApiException e1) {
+                    } catch (IOException | ParseException | SpotifyWebApiException | NullPointerException e1) {
                         if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
                             SpotifyAPIConnector.refreshToken();
                         } else {
-                            e1.printStackTrace();
+                            Console.printError(refreshToken, MessageType.ERROR, e1);
                         }
                     }
                 }
