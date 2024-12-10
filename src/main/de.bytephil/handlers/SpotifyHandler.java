@@ -1,5 +1,7 @@
 package handlers;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,8 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 public class SpotifyHandler {
 
     private final SpotifyAPIConnector spotifyAPI = Main.spotifyConnector;
+    private Instant requestTime;
+    private List<SongObject> cachedQueuObjects;
 
     public int getDurationtoSong(String url) {
         double lengthInSeconds = 0.0;
@@ -36,14 +40,21 @@ public class SpotifyHandler {
     }
 
     public List<SongObject> getQueueAsSongObjects() {
-        List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
-        List<SongObject> songObjects = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            IPlaylistItem iPlaylistItem = userQueue.get(i);
-            Track item = SearchRequest.getTrackById(iPlaylistItem.getId());
-            songObjects.add(new SongObject(item.getName(), item.getArtists()[0].getName(),
-                    item.getAlbum().getImages()[0].getUrl(), item.getUri(), false));
+        if (requestTime == null) {
+            requestTime = Instant.now();
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
+            List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
+            List<SongObject> songObjects = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                IPlaylistItem iPlaylistItem = userQueue.get(i);
+                Track item = SearchRequest.getTrackById(iPlaylistItem.getId());
+                songObjects.add(new SongObject(item.getName(), item.getArtists()[0].getName(),
+                        item.getAlbum().getImages()[0].getUrl(), item.getUri(), false));
+            }
+            requestTime = Instant.now();
+            cachedQueuObjects = songObjects;
+            return songObjects;
         }
-        return songObjects;
+        return cachedQueuObjects;
     }
 }
