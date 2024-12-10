@@ -7,6 +7,8 @@ let uri3;
 let sentValue;
 let refreshQueue = false;
 
+let cachedImage;
+
 let songAdded;
 
 function hideSearch() {
@@ -103,7 +105,10 @@ function setupWebSocket() {
         }
 
         if (wsinput["cover"] !== undefined) {
-          document.getElementById("song-cover").src = wsinput["cover"];
+          if (wsinput["cover"] !== cachedImage) {
+            document.getElementById("song-cover").src = wsinput["cover"];
+            cachedImage = wsinput["cover"];
+          }
         }
 
         if (wsinput["uri"] !== undefined) {
