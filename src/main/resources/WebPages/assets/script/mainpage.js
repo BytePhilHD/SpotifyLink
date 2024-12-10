@@ -23,6 +23,10 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
+  if (ws) {
+    ws.close();
+  }
+
   if (location.protocol === "http:") {
     ws = new WebSocket(
       "ws://" + location.hostname + ":" + location.port + "/main"
@@ -189,8 +193,10 @@ function refresh() {
     return;
   }
   if (refreshQueue) {
+    console.log("refresh Queue");
     ws.send("refresh Queue");
   } else {
+    console.log("refresh");
     ws.send("refresh");
   }
   if (input.value !== null && input.value !== "") {

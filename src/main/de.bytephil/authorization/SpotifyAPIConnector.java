@@ -113,10 +113,10 @@ public class SpotifyAPIConnector {
         }
     }
 
-    public JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
+    public synchronized JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
         if (requestTime == null) {
             requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 2) {
             IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
             if (playlistItem instanceof Track) {
                 Track track = (Track) playlistItem;
