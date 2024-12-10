@@ -3,9 +3,7 @@ package authorization;
 import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import enums.MessageType;
 import main.Main;
@@ -50,10 +48,8 @@ public class AuthenticationURI {
             final URI uri = uriFuture.join();
 
             System.out.println("URI: " + uri.toString());
-        } catch (CompletionException e) {
-            System.out.println("Error: " + e.getCause().getMessage());
-        } catch (CancellationException e) {
-            System.out.println("Async operation cancelled.");
+        } catch (Exception e) {
+            Console.printError("Error at AuthenticationURI", MessageType.ERROR, e);
         }
     }
 
