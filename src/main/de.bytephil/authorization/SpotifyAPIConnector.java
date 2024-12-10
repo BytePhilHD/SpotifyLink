@@ -1,8 +1,6 @@
 package authorization;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,7 +52,7 @@ public class SpotifyAPIConnector {
 
             Console.printout("Authentication successful!", MessageType.INFO);
             Console.printout(authorizationCodeCredentials.getAccessToken(), MessageType.INFO);
-            reader();
+            Main.setStartingUp(false);
 
             System.out.println("Expires in: " + authorizationCodeCredentials.getExpiresIn());
         } catch (IOException | SpotifyWebApiException | ParseException e) {
@@ -77,15 +75,6 @@ public class SpotifyAPIConnector {
             Console.printout("Token refreshed successfully!", MessageType.INFO);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             Console.printout("Error refreshing token: " + e.getMessage(), MessageType.ERROR);
-        }
-    }
-
-    public static void reader() {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-            String input = reader.readLine();
-            // ...
-        } catch (IOException e1) {
-            Console.printout("Error in reader: " + e1.getMessage(), MessageType.ERROR);
         }
     }
 
