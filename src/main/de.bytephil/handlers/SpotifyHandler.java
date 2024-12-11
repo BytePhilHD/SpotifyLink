@@ -39,18 +39,23 @@ public class SpotifyHandler {
         return (int) Math.round(lengthInSeconds / 60.0);
     }
 
-    public List<SongObject> getQueueAsSongObjects() {
+    public synchronized List<SongObject> getQueueAsSongObjects() {
         if (requestTime == null) {
             requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 3) {
             List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
             List<SongObject> songObjects = new ArrayList<>();
-            for (int i = 0; i < 3; i++) {
-                IPlaylistItem iPlaylistItem = userQueue.get(i);
-                Track item = SearchRequest.getTrackById(iPlaylistItem.getId());
-                songObjects.add(new SongObject(item.getName(), item.getArtists()[0].getName(),
-                        item.getAlbum().getImages()[0].getUrl(), item.getUri(), false));
+
+            Track[] tracks = SearchRequest
+                    .getSeveralTracks_Sync(
+                            userQueue.stream().limit(3).map(IPlaylistItem::getId).toArray(String[]::new));
+
+            for (Track track : tracks) {
+                songObjects.add(new SongObject(track.getName(), track.getArtists()[0].getName(),
+                        track.getAlbum().getImages()[0].getUrl(),
+                        track.getUri(), false));
             }
+
             requestTime = Instant.now();
             cachedQueuObjects = songObjects;
             return songObjects;

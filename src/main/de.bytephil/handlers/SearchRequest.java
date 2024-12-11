@@ -1,12 +1,12 @@
 package handlers;
 
 import java.io.IOException;
-import java.util.concurrent.CancellationException;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 import org.apache.hc.core5.http.ParseException;
 
+import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -14,6 +14,9 @@ import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
+import se.michaelthelin.spotify.requests.data.tracks.GetSeveralTracksRequest;
+import se.michaelthelin.spotify.requests.data.tracks.GetTrackRequest;
+import services.Console;
 
 public class SearchRequest {
     private static final String CLIENT_ID = Main.config.clientID;
@@ -26,38 +29,64 @@ public class SearchRequest {
     private static final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials()
             .build();
 
-    public static Paging<Track> searchRequest(String searchrequest) {
+    private static String accessToken;
+    private static Instant tokenExpirationTime;
+
+    private static void refreshAccessToken() {
         try {
             final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
-
-            // Set access token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(clientCredentials.getAccessToken());
-            return spotifyApi.searchTracks(searchrequest).limit(5).build().execute();
+            accessToken = clientCredentials.getAccessToken();
+            tokenExpirationTime = Instant.now().plusSeconds(clientCredentials.getExpiresIn());
+            spotifyApi.setAccessToken(accessToken);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            Console.printError("Error refreshing access token", MessageType.ERROR, e);
+        }
+    }
+
+    private static void ensureAccessToken() {
+        if (accessToken == null || Instant.now().isAfter(tokenExpirationTime)) {
+            refreshAccessToken();
+        }
+    }
+
+    public static Track getTrackById(String uri) {
+        ensureAccessToken();
+        GetTrackRequest getTrackRequest = spotifyApi.getTrack(uri).build();
+        try {
+            return getTrackRequest.execute();
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            Console.printError("Error at SearchRequest", MessageType.ERROR, e);
         }
         return null;
     }
 
-    public static Track getTrackById(String uri) {
-        try {
-            final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
+    public static Track[] getSeveralTracks_Sync(String[] ids) {
+        ensureAccessToken();
 
-            // Set access token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(clientCredentials.getAccessToken());            return spotifyApi.getTrack(uri).build().execute();
+        GetSeveralTracksRequest getSeveralTracksRequest = spotifyApi.getSeveralTracks(ids).build();
+        try {
+            final Track[] tracks = getSeveralTracksRequest.execute();
+
+            return tracks;
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            Console.printError("Error at SearchRequest", MessageType.ERROR, e);
+            return null;
+        }
+    }
+
+    public static Paging<Track> searchRequest(String searchrequest) {
+        ensureAccessToken();
+        try {
+            return spotifyApi.searchTracks(searchrequest).limit(3).build().execute();
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            Console.printError("Error at SearchRequest", MessageType.ERROR, e);
         }
         return null;
     }
 
     public static void clientCredentials_Sync(String searchrequest) {
+        ensureAccessToken();
         try {
-            final ClientCredentials clientCredentials = clientCredentialsRequest.execute();
-
-            // Set access token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(clientCredentials.getAccessToken());
-
             final Paging<Track> trackPaging = spotifyApi.searchTracks(searchrequest).limit(1).build().execute();
 
             String answer = trackPaging.toString();
@@ -68,9 +97,9 @@ public class SearchRequest {
             System.out.println("ID: " + id);
             System.out.println(answer);
 
-            System.out.println("Expires in: " + clientCredentials.getExpiresIn());
+            System.out.println("Expires in: " + tokenExpirationTime);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            Console.printError("Error at SearchRequest", MessageType.ERROR, e);
         }
     }
 
@@ -88,15 +117,8 @@ public class SearchRequest {
             spotifyApi.setAccessToken(clientCredentials.getAccessToken());
 
             System.out.println("Expires in: " + clientCredentials.getExpiresIn());
-        } catch (CompletionException e) {
-            System.out.println("Error: " + e.getCause().getMessage());
-        } catch (CancellationException e) {
-            System.out.println("Async operation cancelled.");
+        } catch (Exception e) {
+            Console.printError("Error at SearchRequest", MessageType.ERROR, e);
         }
     }
-
-    public void search(String searchRequest) {
-        clientCredentials_Sync(searchRequest);
-    }
-
 }

@@ -117,6 +117,7 @@ public class SpotifyAPIConnector {
         if (requestTime == null) {
             requestTime = Instant.now();
         } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 2) {
+
             IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
             if (playlistItem instanceof Track) {
                 Track track = (Track) playlistItem;
