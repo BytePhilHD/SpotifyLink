@@ -17,6 +17,7 @@ import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
+import se.michaelthelin.spotify.model_objects.miscellaneous.CurrentlyPlaying;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import services.Console;
@@ -108,7 +109,7 @@ public class SpotifyAPIConnector {
         try {
             return getCurrentTrackItem().getUri();
         } catch (Exception e1) {
-            Console.printout("Error in getURL: " + e1.getMessage(), MessageType.ERROR);
+            Console.printError("Error in getURL ", MessageType.ERROR, e1);
             return null;
         }
     }
@@ -117,19 +118,29 @@ public class SpotifyAPIConnector {
         if (requestTime == null) {
             requestTime = Instant.now();
         } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 2) {
+            try {
 
-            IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
-            if (playlistItem instanceof Track) {
-                Track track = (Track) playlistItem;
-                JSONObject trackInfo = new JSONObject();
-                trackInfo.put("name", track.getName());
-                trackInfo.put("artists", getArtists(track.getArtists()));
-                trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
-                trackInfo.put("uri", track.getUri());
-                requestTime = Instant.now();
-                cachedSong = trackInfo;
-                return trackInfo;
-            } else {
+                CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
+                if (currentlyPlaying == null) {
+                    return null;
+                }
+                IPlaylistItem playlistItem = currentlyPlaying.getItem();
+
+                if (playlistItem instanceof Track) {
+                    Track track = (Track) playlistItem;
+                    JSONObject trackInfo = new JSONObject();
+                    trackInfo.put("name", track.getName());
+                    trackInfo.put("artists", getArtists(track.getArtists()));
+                    trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
+                    trackInfo.put("uri", track.getUri());
+                    requestTime = Instant.now();
+                    cachedSong = trackInfo;
+                    return trackInfo;
+                } else {
+                    return null;
+                }
+            } catch (NullPointerException e) {
+                Console.printError("Error in getCurrentTrackInfo ", MessageType.ERROR, e);
                 return null;
             }
         }

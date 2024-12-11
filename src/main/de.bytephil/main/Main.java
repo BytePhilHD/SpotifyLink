@@ -202,7 +202,7 @@ public class Main {
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
-                            songInfo.put("user", spotifyConnector.getUserName());
+                            songInfo.put("user", "User");
                             ctx.send(songInfo.toString());
                         }
                     } catch (Exception e1) {
