@@ -193,10 +193,8 @@ function refresh() {
     return;
   }
   if (refreshQueue) {
-    console.log("refresh Queue");
     ws.send("refresh Queue");
   } else {
-    console.log("refresh");
     ws.send("refresh");
   }
   if (input.value !== null && input.value !== "") {
