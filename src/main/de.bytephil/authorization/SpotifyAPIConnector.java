@@ -2,13 +2,10 @@ package authorization;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hc.core5.http.ParseException;
-import org.json.JSONObject;
 
 import enums.MessageType;
 import main.Main;
@@ -28,9 +25,6 @@ public class SpotifyAPIConnector {
     private static final URI redirectUri = SpotifyHttpManager.makeUri(Main.config.webaddress + "auth.html");
     public static String code = "";
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
-
-    private Instant requestTime;
-    private JSONObject cachedSong;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(CLIENT_ID)
@@ -114,51 +108,6 @@ public class SpotifyAPIConnector {
         }
     }
 
-    public synchronized JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
-        if (requestTime == null) {
-            requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 2) {
-            try {
-
-                CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
-                if (currentlyPlaying == null) {
-                    return null;
-                }
-                IPlaylistItem playlistItem = currentlyPlaying.getItem();
-
-                if (playlistItem instanceof Track) {
-                    Track track = (Track) playlistItem;
-                    JSONObject trackInfo = new JSONObject();
-                    trackInfo.put("name", track.getName());
-                    trackInfo.put("artists", getArtists(track.getArtists()));
-                    trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
-                    trackInfo.put("uri", track.getUri());
-                    requestTime = Instant.now();
-                    cachedSong = trackInfo;
-                    return trackInfo;
-                } else {
-                    return null;
-                }
-            } catch (NullPointerException e) {
-                Console.printError("Error in getCurrentTrackInfo ", MessageType.ERROR, e);
-                return null;
-            }
-        }
-        return cachedSong;
-    }
-
-    private String getArtists(ArtistSimplified[] artists) {
-        StringBuilder artistsNames = new StringBuilder();
-        for (ArtistSimplified artist : artists) {
-            artistsNames.append(artist.getName()).append(", ");
-        }
-        // Remove the trailing comma and space
-        if (artistsNames.length() > 0) {
-            artistsNames.setLength(artistsNames.length() - 2);
-        }
-        return artistsNames.toString();
-    }
-
     public String readCurrentSong() {
         try {
             return getCurrentTrackItem().getName();
@@ -199,10 +148,11 @@ public class SpotifyAPIConnector {
     }
 
     public Track getCurrentTrackItem() throws IOException, SpotifyWebApiException, ParseException {
-        IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
-        if (playlistItem == null) {
+        CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
+        if (currentlyPlaying == null) {
             return null;
         }
+        IPlaylistItem playlistItem = currentlyPlaying.getItem();
         if (playlistItem instanceof Track) {
             return (Track) playlistItem;
         } else {

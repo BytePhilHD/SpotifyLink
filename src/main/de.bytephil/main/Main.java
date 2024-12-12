@@ -126,7 +126,7 @@ public class Main {
                                     + ")",
                             MessageType.INFO);
                     try {
-                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
+                        JSONObject data = spotifyAPIHandler.getCurrentTrackInfo();
                         if (data != null) {
                             ctx.send(data.toString());
                         }
@@ -185,7 +185,7 @@ public class Main {
                 final String content = ctx.message();
                 if (content.contains("refresh")) {
                     try {
-                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
+                        JSONObject data = spotifyAPIHandler.getCurrentTrackInfo();
                         if (data != null) {
                             if (content.contains("Admin")) {
                                 data.put("user", spotifyConnector.getUserName());
