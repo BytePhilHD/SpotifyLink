@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.hc.core5.http.ParseException;
 
+import authorization.SpotifyAPIConnector;
 import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -22,10 +23,13 @@ public class SearchRequest {
     private static final String CLIENT_ID = Main.config.clientID;
     private static final String CLIENT_SECRET = Main.config.clientSecret;
 
-    private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
-            .setClientId(CLIENT_ID)
-            .setClientSecret(CLIENT_SECRET)
-            .build();
+    private static final SpotifyApi spotifyApi = SpotifyAPIConnector.spotifyApi;
+    /*
+     * private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
+     * .setClientId(CLIENT_ID)
+     * .setClientSecret(CLIENT_SECRET)
+     * .build();
+     */
     private static final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials()
             .build();
 

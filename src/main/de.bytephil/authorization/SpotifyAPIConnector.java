@@ -26,7 +26,7 @@ public class SpotifyAPIConnector {
     public static String code = "";
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
 
-    private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
+    public static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(CLIENT_ID)
             .setClientSecret(CLIENT_SECRET)
             .setRedirectUri(redirectUri)

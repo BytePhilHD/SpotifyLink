@@ -22,6 +22,7 @@ public class AuthenticationURI {
             .setClientSecret(CLIENT_SECRET)
             .setRedirectUri(redirectUri)
             .build();
+
     private static final AuthorizationCodeUriRequest authorizationCodeUriRequest = spotifyApi.authorizationCodeUri()
             .scope("user-read-currently-playing,user-modify-playback-state,user-read-playback-state")
             .show_dialog(true)
@@ -51,11 +52,6 @@ public class AuthenticationURI {
         } catch (Exception e) {
             Console.printError("Error at AuthenticationURI", MessageType.ERROR, e);
         }
-    }
-
-    public static void main(String[] args) {
-        authorizationCodeUri_Sync();
-        authorizationCodeUri_Async();
     }
 
     public static void browser(String url) {

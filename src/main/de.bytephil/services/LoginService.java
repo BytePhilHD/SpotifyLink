@@ -1,8 +1,8 @@
 package services;
 
-import main.Main;
-
 import java.util.HashMap;
+
+import main.Main;
 
 public class LoginService {
 
@@ -12,10 +12,6 @@ public class LoginService {
         String pw = webSocketAnswer.replace("LOGIN: ", "");
         String passwordADMIN = Main.config.password;
 
-        if (pw.equals(passwordADMIN)) {
-            return true;
-        } else {
-            return false;
-        }
+        return pw.equals(passwordADMIN);
     }
 }
