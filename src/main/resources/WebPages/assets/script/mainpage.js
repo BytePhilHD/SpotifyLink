@@ -45,7 +45,9 @@ function setupWebSocket() {
   } catch (e) {
     setInterval(setupWebSocket, 2000);
   }
-
+  ws.onopen = () => {
+    refresh();
+  };
   setInterval(refresh, 2000);
 
   hideSearch();
@@ -66,6 +68,7 @@ function setupWebSocket() {
       alert("Falscher Code!");
       ws.close();
       wrongCode = true;
+      document.getElementById("song-name").innerHTML = "Falscher Code!";
       return;
     }
     try {
