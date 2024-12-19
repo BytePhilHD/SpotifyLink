@@ -195,6 +195,7 @@ public class Main {
                         if (data != null) {
                             if (content.contains("Admin")) {
                                 data.put("user", spotifyConnector.getUserName());
+                                data.put("sessionCode", sessionCode);
                             } else if (content.contains("Queue")) {
                                 data.put("user", "User");
                                 String jsonString = objectMapper
