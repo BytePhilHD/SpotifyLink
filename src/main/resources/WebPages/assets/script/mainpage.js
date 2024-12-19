@@ -13,6 +13,8 @@ let cachedImages = {};
 
 let songAdded;
 
+let wrongCode = false;
+
 function hideSearch() {
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).style.visibility = "hidden";
@@ -23,6 +25,9 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
+  if (wrongCode) {
+    return;
+  }
   if (ws) {
     ws.close();
   }
@@ -55,6 +60,12 @@ function setupWebSocket() {
           "Lied spielt in ca. " + queueLength + " min";
         songAdded = false;
       }
+      return;
+    }
+    if (messageEvent.data == "close") {
+      alert("Falscher Code!");
+      ws.close();
+      wrongCode = true;
       return;
     }
     try {
@@ -149,7 +160,9 @@ function setupWebSocket() {
   // Buttons for selecting the right song
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).onclick = function () {
-      ws.send("Song-Play: " + window[`uri${i}`]);
+      data.action = "add-song";
+      data.content = window[`uri${i}`];
+      ws.send(JSON.stringify(data));
       hideSearch();
       document.getElementById("song-added").innerHTML =
         "Song wird hinzugefügt...";
@@ -169,7 +182,9 @@ input.addEventListener("change", updateValue);
 
 function updateValue() {
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
 }
 
@@ -190,19 +205,33 @@ document.getElementById("queueToggle").onclick = function () {
   }
 };
 
+let data = {
+  sessionCode: location.search.replace("?", ""),
+  action: "",
+  content: "",
+};
+
 let counter = 0;
 
 function refresh() {
+  if (wrongCode) {
+    return;
+  }
   if (ws.readyState == 0) {
     return;
   }
   if (refreshQueue) {
-    ws.send("refresh Queue");
+    data.action = "refresh";
+    data.content = "queue";
+    ws.send(JSON.stringify(data));
   } else {
-    ws.send("refresh");
+    data.action = "refresh";
+    ws.send(JSON.stringify(data));
   }
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
   if (songAdded) {
     if (counter == 3) {
