@@ -219,8 +219,14 @@ document.getElementById("change-user-button").onclick = function () {
 };
 
 document.getElementById("generate-session-code").onclick = function () {
-  data.ACTION = "NEW-SESSION";
-  ws.send(JSON.stringify(data));
+  if (
+    confirm(
+      "Möchtest du den Session-Code neu generieren? Dadurch werden alle eingeloggten User ausgeloggt!"
+    )
+  ) {
+    data.ACTION = "NEW-SESSION";
+    ws.send(JSON.stringify(data));
+  }
 };
 
 function setupShareButton() {
@@ -236,14 +242,16 @@ function shareHandler() {
     url: mainLink + "?" + sessionCode + "/",
   };
 
-  if (navigator.share) {
-    navigator.share(shareData).catch((err) => {
-      console.error("Share failed:", err.message);
-    });
-  } else {
-    const fallbackUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-      shareData.title + "\n" + shareData.text + "\n" + shareData.url
-    )}`;
-    window.open(fallbackUrl, "_blank");
+  {
+    if (navigator.share) {
+      navigator.share(shareData).catch((err) => {
+        console.error("Share failed:", err.message);
+      });
+    } else {
+      const fallbackUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+        shareData.title + "\n" + shareData.text + "\n" + shareData.url
+      )}`;
+      window.open(fallbackUrl, "_blank");
+    }
   }
 }
