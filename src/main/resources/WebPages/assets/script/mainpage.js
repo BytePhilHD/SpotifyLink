@@ -27,14 +27,18 @@ function setupWebSocket() {
     ws.close();
   }
 
-  if (location.protocol === "http:") {
-    ws = new WebSocket(
-      "ws://" + location.hostname + ":" + location.port + "/main"
-    );
-  } else {
-    ws = new WebSocket(
-      "wss://" + location.hostname + ":" + location.port + "/main"
-    );
+  try {
+    if (location.protocol === "http:") {
+      ws = new WebSocket(
+        "ws://" + location.hostname + ":" + location.port + "/main"
+      );
+    } else {
+      ws = new WebSocket(
+        "wss://" + location.hostname + ":" + location.port + "/main"
+      );
+    }
+  } catch (e) {
+    setInterval(setupWebSocket, 2000);
   }
 
   setInterval(refresh, 2000);
