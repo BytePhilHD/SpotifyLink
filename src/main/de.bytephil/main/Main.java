@@ -112,6 +112,7 @@ public class Main {
             ws.onMessage(ctx -> {
                 String message = ctx.message().replace("?", "").replace("code=", "");
                 SpotifyAPIConnector.authorizationCode_Sync(message);
+                ctx.send(sessionCode);
             });
         });
 

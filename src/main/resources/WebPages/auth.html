@@ -31,8 +31,10 @@
           console.log("INFO - Connection to Server established!");
           var code = location.search;
           ws.send(code);
-          window.location.href = "/";
         };
+        ws.onmessage = (messageEvent) => {
+          window.location.href = "/?" + messageEvent.data;
+        }
         ws.onclose = (closeEvent) => {
           setupWebSocket();
         };
