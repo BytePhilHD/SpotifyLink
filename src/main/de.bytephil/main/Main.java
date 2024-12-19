@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,8 @@ public class Main {
 
     public static String refreshToken;
 
+    public static String sessionCode;
+
     public static SpotifyAPIConnector spotifyConnector;
 
     private static SpotifyHandler spotifyAPIHandler;
@@ -90,6 +93,7 @@ public class Main {
         AuthenticationURI.authorizationCodeUri_Sync();
         spotifyConnector = new SpotifyAPIConnector();
         spotifyAPIHandler = new SpotifyHandler();
+        generateSessionCode(5);
     }
 
     public static void startApp() throws IOException {
@@ -170,6 +174,8 @@ public class Main {
                             JSONObject authJsonObject = new JSONObject();
                             authJsonObject.put("auth-url", AuthenticationURI.getAuthorizationURL());
                             ctx.send(authJsonObject.toString());
+                        } else if (data.get("ACTION").equals("NEW-SESSION")) {
+                            generateSessionCode(5);
                         }
                     } else {
                         ctx.send("close");
@@ -293,5 +299,19 @@ public class Main {
 
     private static boolean checkSongisQueue(String uri) {
         return playedSongs.contains(uri);
+    }
+
+    private static void generateSessionCode(int length) {
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom RANDOM = new SecureRandom();
+        StringBuilder code = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            code.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+        }
+        sessionCode = code.toString();
+        Console.printout("", MessageType.INFO);
+        Console.printout("SessionCode: " + sessionCode, MessageType.INFO);
+        Console.printout("", MessageType.INFO);
+
     }
 }
