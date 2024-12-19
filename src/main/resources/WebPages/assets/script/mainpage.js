@@ -68,6 +68,7 @@ function setupWebSocket() {
     if (messageEvent.data == "forbidden") {
       wrongCode = true;
       document.getElementById("song-name").innerHTML = "Falscher Code!";
+      document.getElementById("song-artists").innerHTML = "Seite neuladen um den Code einzugeben."
 
       var code = prompt("Gib den aktuellen Session Code ein:", "");
 
