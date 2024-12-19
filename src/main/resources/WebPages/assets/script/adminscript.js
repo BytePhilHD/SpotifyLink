@@ -27,10 +27,18 @@ if (location.port != "") {
 const mainLink = location.protocol + "//" + location.hostname + port;
 
 function setupWebSocket() {
-  if (location.protocol === "http:") {
-    ws = new WebSocket("ws://" + location.hostname + port + "/main");
-  } else {
-    ws = new WebSocket("wss://" + location.hostname + port + "/main");
+  try {
+    if (location.protocol === "http:") {
+      ws = new WebSocket(
+        "ws://" + location.hostname + ":" + location.port + "/main"
+      );
+    } else {
+      ws = new WebSocket(
+        "wss://" + location.hostname + ":" + location.port + "/main"
+      );
+    }
+  } catch (e) {
+    setInterval(setupWebSocket, 2000);
   }
 
   setInterval(refresh, 2000);
@@ -163,7 +171,7 @@ function refresh() {
   if (ws.readyState == 0) {
     return;
   }
-  
+
   data.action = "refresh";
   ws.send(JSON.stringify(data));
 
@@ -246,7 +254,10 @@ function setupShareButton() {
 function shareHandler() {
   const shareData = {
     title: "BytePhil Music",
-    text: "Füge Songs zur Warteschlange hinzu! \n",
+    text:
+      "Füge Songs zur Warteschlange hinzu! \nZugangscode: " +
+      sessionCode +
+      " oder nutze den Link: \n ",
     url: mainLink + "?" + sessionCode + "/",
   };
 

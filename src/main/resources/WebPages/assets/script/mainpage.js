@@ -64,7 +64,10 @@ function setupWebSocket() {
       }
       return;
     }
-    if (messageEvent.data == "close") {
+    if (messageEvent.data == "forbidden") {
+      wrongCode = true;
+      document.getElementById("song-name").innerHTML = "Falscher Code!";
+
       var code = prompt(
         "Gib den aktuellen Session Code ein:",
         ""
@@ -74,9 +77,6 @@ function setupWebSocket() {
         location.search = code;
         return;
       }
-      ws.close();
-      wrongCode = true;
-      document.getElementById("song-name").innerHTML = "Falscher Code!";
       return;
     }
     try {

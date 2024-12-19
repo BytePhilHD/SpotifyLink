@@ -150,7 +150,7 @@ public class Main {
 
                 UserType userType = checkSessionCode(messageJSONObject);
                 if (userType == UserType.FORBIDDEN) {
-                    ctx.send("close");
+                    ctx.send("forbidden");
                     return;
                 }
 
