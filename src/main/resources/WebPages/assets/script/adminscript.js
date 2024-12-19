@@ -142,7 +142,9 @@ function setupWebSocket() {
   // Buttons for selecting the right song
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).onclick = function () {
-      ws.send("Song-Play: " + window[`uri${i}`]);
+      data.action = "add-song";
+      data.content = window[`uri${i}`];
+      ws.send(JSON.stringify(data));
       hideSearch();
       document.getElementById("song-added").innerHTML =
         "Song wird hinzugefügt...";
@@ -161,11 +163,14 @@ function refresh() {
   if (ws.readyState == 0) {
     return;
   }
-
-  ws.send("refresh Admin");
+  
+  data.action = "refresh";
+  ws.send(JSON.stringify(data));
 
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
   if (songAdded) {
     if (counter == 3) {
@@ -187,34 +192,37 @@ input.addEventListener("change", updateValue);
 
 function updateValue() {
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
 }
 
 let data = {
-  AUTH: location.search.replace("?", ""),
-  ACTION: "",
+  adminCode: location.search.replace("?", ""),
+  action: "",
+  content: "",
 };
 
 document.getElementById("back-button").onclick = function () {
-  data.ACTION = "BACK";
+  data.action = "BACK";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("play-button").onclick = function () {
-  data.ACTION = "PLAYPAUSE";
+  data.action = "PLAYPAUSE";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("vorward-button").onclick = function () {
-  data.ACTION = "NEXT";
+  data.action = "NEXT";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("toggle-state").onclick = function () {
-  data.ACTION = "TOGGLE-STATE";
+  data.action = "TOGGLE-STATE";
   ws.send(JSON.stringify(data));
 };
 
 document.getElementById("change-user-button").onclick = function () {
-  data.ACTION = "CHANGEUSER";
+  data.action = "CHANGEUSER";
   ws.send(JSON.stringify(data));
 };
 
@@ -224,7 +232,7 @@ document.getElementById("generate-session-code").onclick = function () {
       "Möchtest du den Session-Code neu generieren? Dadurch werden alle eingeloggten User ausgeloggt!"
     )
   ) {
-    data.ACTION = "NEW-SESSION";
+    data.action = "NEW-SESSION";
     ws.send(JSON.stringify(data));
   }
 };

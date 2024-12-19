@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.hc.core5.http.ParseException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,13 +19,13 @@ import authorization.AuthenticationURI;
 import authorization.SpotifyAPIConnector;
 import entities.SongObject;
 import enums.MessageType;
+import enums.UserType;
 import handlers.SearchRequest;
 import handlers.SpotifyHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsConnectContext;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -129,18 +128,6 @@ public class Main {
                                             : "unknown")
                                     + ")",
                             MessageType.INFO);
-                    try {
-                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                        if (data != null) {
-                            ctx.send(data.toString());
-                        }
-                    } catch (IOException | ParseException | SpotifyWebApiException | NullPointerException e1) {
-                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
-                            SpotifyAPIConnector.refreshToken();
-                        } else {
-                            Console.printError(refreshToken, MessageType.ERROR, e1);
-                        }
-                    }
                 }
             });
             ws.onClose(ctx -> {
@@ -157,24 +144,32 @@ public class Main {
                     ctx.closeSession();
                     return;
                 }
-                if (ctx.message().contains("AUTH")) {
-                    JSONObject data = new JSONObject(ctx.message());
+                final String content = ctx.message();
+                final JSONObject messageJSONObject = new JSONObject(content);
 
-                    if (logtIn.contains((String) data.get("AUTH"))) {
+                UserType userType = checkSessionCode(messageJSONObject);
+                if (userType == UserType.FORBIDDEN) {
+                    ctx.send("close");
+                    return;
+                }
 
-                        if (data.get("ACTION").equals("PLAYPAUSE")) {
+                if (userType == UserType.ADMIN) {
+
+                    if (logtIn.contains((String) messageJSONObject.get("adminCode"))) {
+
+                        if (messageJSONObject.get("action").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
-                        } else if (data.get("ACTION").equals("NEXT")) {
+                        } else if (messageJSONObject.get("action").equals("NEXT")) {
                             spotifyConnector.songVorward();
-                        } else if (data.get("ACTION").equals("BACK")) {
+                        } else if (messageJSONObject.get("action").equals("BACK")) {
                             spotifyConnector.songBack();
-                        } else if (data.get("ACTION").equals("TOGGLE-STATE")) {
+                        } else if (messageJSONObject.get("action").equals("TOGGLE-STATE")) {
                             isRunning = !isRunning;
-                        } else if (data.get("ACTION").equals("CHANGEUSER")) {
+                        } else if (messageJSONObject.get("action").equals("CHANGEUSER")) {
                             JSONObject authJsonObject = new JSONObject();
                             authJsonObject.put("auth-url", AuthenticationURI.getAuthorizationURL());
                             ctx.send(authJsonObject.toString());
-                        } else if (data.get("ACTION").equals("NEW-SESSION")) {
+                        } else if (messageJSONObject.get("action").equals("NEW-SESSION")) {
                             generateSessionCode(5);
                         }
                     } else {
@@ -188,19 +183,12 @@ public class Main {
                     ctx.send(songInfo.toString());
                     return;
                 }
-                final String content = ctx.message();
-                final JSONObject messageJSONObject = new JSONObject(content);
-
-                if (!checkSessionCode(messageJSONObject)) {
-                    ctx.send("close");
-                    return;
-                }
 
                 if (messageJSONObject.get("action").equals("refresh")) {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
-                            if (content.contains("Admin")) {
+                            if (userType == UserType.ADMIN) {
                                 data.put("user", spotifyConnector.getUserName());
                                 data.put("sessionCode", sessionCode);
                             } else if (messageJSONObject.get("content").equals("queue")) {
@@ -323,11 +311,16 @@ public class Main {
 
     }
 
-    private static boolean checkSessionCode(JSONObject content) {
-        if (content.get("sessionCode") != null) {
-            return content.get("sessionCode").equals(sessionCode);
-        } else {
-            return false;
+    private static UserType checkSessionCode(JSONObject content) {
+        if (content.has("sessionCode")) {
+            if (content.get("sessionCode").equals(sessionCode)) {
+                return UserType.USER;
+            }
+        } else if (content.has("adminCode")) {
+            if (logtIn.contains((String) content.get("adminCode"))) {
+                return UserType.ADMIN;
+            }
         }
+        return UserType.FORBIDDEN;
     }
 }
