@@ -214,7 +214,7 @@ document.getElementById("queueToggle").onclick = function () {
 };
 
 let data = {
-  sessionCode: location.search.replace("?", ""),
+  sessionCode: location.search.replace("?", "").replace("/", ""),
   action: "",
   content: "",
 };
