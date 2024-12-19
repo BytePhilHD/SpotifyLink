@@ -65,10 +65,13 @@ function setupWebSocket() {
       return;
     }
     if (messageEvent.data == "close") {
-      var code = prompt("Gib den aktuellen Session Code ein:", "");
+      var code = prompt(
+        "Gib den aktuellen Session Code ein:",
+        ""
+      ).toUpperCase();
 
       if (code != null && code != "") {
-        location.search = code.toUpperCase();
+        location.search = code;
         return;
       }
       ws.close();
