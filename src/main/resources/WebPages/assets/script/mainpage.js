@@ -65,7 +65,12 @@ function setupWebSocket() {
       return;
     }
     if (messageEvent.data == "close") {
-      alert("Falscher Code!");
+      var code = prompt("Gib den aktuellen Session Code ein:", "");
+
+      if (code != null && code != "") {
+        location.search = code.toUpperCase();
+        return;
+      }
       ws.close();
       wrongCode = true;
       document.getElementById("song-name").innerHTML = "Falscher Code!";
