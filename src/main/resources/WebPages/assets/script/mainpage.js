@@ -56,11 +56,12 @@ function setupWebSocket() {
       let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
       if (queueLength == -1) {
         document.getElementById("song-added").innerHTML =
-          "Fehler beim Hinzufügen des Songs!";
+          "Lied spielt als nächstes.";
       } else {
         document.getElementById("song-added").innerHTML =
           "Lied spielt in ca. " + queueLength + " min";
         songAdded = false;
+        counter = 0;
       }
       return;
     }
@@ -68,13 +69,10 @@ function setupWebSocket() {
       wrongCode = true;
       document.getElementById("song-name").innerHTML = "Falscher Code!";
 
-      var code = prompt(
-        "Gib den aktuellen Session Code ein:",
-        ""
-      ).toUpperCase();
+      var code = prompt("Gib den aktuellen Session Code ein:", "");
 
       if (code != null && code != "") {
-        location.search = code;
+        location.search = code.toUpperCase();
         return;
       }
       return;
