@@ -189,14 +189,21 @@ public class Main {
                     return;
                 }
                 final String content = ctx.message();
-                if (content.contains("refresh")) {
+                final JSONObject messageJSONObject = new JSONObject(content);
+
+                if (!checkSessionCode(messageJSONObject)) {
+                    ctx.send("close");
+                    return;
+                }
+
+                if (messageJSONObject.get("action").equals("refresh")) {
                     try {
                         JSONObject data = spotifyConnector.getCurrentTrackInfo();
                         if (data != null) {
                             if (content.contains("Admin")) {
                                 data.put("user", spotifyConnector.getUserName());
                                 data.put("sessionCode", sessionCode);
-                            } else if (content.contains("Queue")) {
+                            } else if (messageJSONObject.get("content").equals("queue")) {
                                 data.put("user", "User");
                                 String jsonString = objectMapper
                                         .writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
@@ -217,8 +224,8 @@ public class Main {
                             SpotifyAPIConnector.refreshToken();
                         }
                     }
-                } else if (ctx.message().contains("Search:")) {
-                    String searchQuery = ctx.message().replace("Search: ", "");
+                } else if (messageJSONObject.get("action").equals("search")) {
+                    String searchQuery = messageJSONObject.get("content").toString();
                     if (searchQuery.equalsIgnoreCase("")) {
                         return;
                     }
@@ -250,8 +257,8 @@ public class Main {
                     } catch (Exception e1) {
                         e1.printStackTrace();
                     }
-                } else if (ctx.message().contains("Song-Play")) {
-                    String url = ctx.message().replace("Song-Play: ", "");
+                } else if (messageJSONObject.get("action").equals("add-song")) {
+                    String url = messageJSONObject.get("content").toString();
                     if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
@@ -314,5 +321,13 @@ public class Main {
         Console.printout("SessionCode: " + sessionCode, MessageType.INFO);
         Console.printout("", MessageType.INFO);
 
+    }
+
+    private static boolean checkSessionCode(JSONObject content) {
+        if (content.get("sessionCode") != null) {
+            return content.get("sessionCode").equals(sessionCode);
+        } else {
+            return false;
+        }
     }
 }
