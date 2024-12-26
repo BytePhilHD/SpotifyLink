@@ -193,7 +193,7 @@ public class Main {
                                 data.put("user", spotifyConnector.getUserName());
                                 data.put("sessionCode", sessionCode);
                             } else if (messageJSONObject.get("content").equals("queue")) {
-                                data.put("user", "User");
+                                data.put("user", "Unbekannt");
                                 String jsonString = objectMapper
                                         .writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
                                 JSONObject response = new JSONObject();
@@ -205,7 +205,13 @@ public class Main {
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
-                            songInfo.put("user", "User");
+                            String username = spotifyConnector.getUserName();
+                            if (username != null) {
+                                songInfo.put("user", username);
+                            } else {
+                                songInfo.put("user", "Unbekannt");
+                            }
+                            songInfo.put("sessionCode", sessionCode);
                             ctx.send(songInfo.toString());
                         }
                     } catch (Exception e1) {
