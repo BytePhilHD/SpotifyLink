@@ -181,6 +181,7 @@ public class Main {
                 if (!isRunning || startingUp) {
                     JSONObject songInfo = new JSONObject();
                     songInfo.put("Not-playing", true);
+                    songInfo.put("sessionCode", sessionCode);
                     ctx.send(songInfo.toString());
                     return;
                 }
