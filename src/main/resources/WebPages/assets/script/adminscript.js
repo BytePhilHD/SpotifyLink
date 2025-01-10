@@ -7,6 +7,7 @@ let sentValue;
 let songAdded;
 let counter = 0;
 let cachedImage;
+let sessionCode;
 
 function hideSearch() {
   for (let i = 1; i <= 3; i++) {
@@ -17,15 +18,27 @@ function hideSearch() {
   }
 }
 
+const port = "";
+
+if (location.port != "") {
+  port = ":" + location.port;
+}
+
+const mainLink = location.protocol + "//" + location.hostname + port;
+
 function setupWebSocket() {
-  if (location.protocol === "http:") {
-    ws = new WebSocket(
-      "ws://" + location.hostname + ":" + location.port + "/main"
-    );
-  } else {
-    ws = new WebSocket(
-      "wss://" + location.hostname + ":" + location.port + "/main"
-    );
+  try {
+    if (location.protocol === "http:") {
+      ws = new WebSocket(
+        "ws://" + location.hostname + ":" + location.port + "/main"
+      );
+    } else {
+      ws = new WebSocket(
+        "wss://" + location.hostname + ":" + location.port + "/main"
+      );
+    }
+  } catch (e) {
+    setInterval(setupWebSocket, 2000);
   }
 
   setInterval(refresh, 2000);
@@ -33,13 +46,7 @@ function setupWebSocket() {
   hideSearch();
   ws.onmessage = (messageEvent) => {
     if (messageEvent.data == "close") {
-      window.location.href =
-        location.protocol +
-        "//" +
-        location.hostname +
-        ":" +
-        location.port +
-        "/login.html";
+      window.location.href = mainLink + "/login.html";
       return;
     }
     if (messageEvent.data.includes("QUEUE-LENGTH: ")) {
@@ -59,6 +66,12 @@ function setupWebSocket() {
 
       if (wsinput["user"] !== undefined) {
         document.getElementById("username").innerHTML = wsinput["user"];
+      }
+      if (wsinput["sessionCode"] !== undefined) {
+        sessionCode = wsinput["sessionCode"];
+        document.getElementById("sessionCode").innerHTML = sessionCode;
+
+        setupShareButton();
       } else if (wsinput["auth-url"] !== undefined) {
         window.location.href = wsinput["auth-url"];
       }
@@ -137,7 +150,9 @@ function setupWebSocket() {
   // Buttons for selecting the right song
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).onclick = function () {
-      ws.send("Song-Play: " + window[`uri${i}`]);
+      data.action = "add-song";
+      data.content = window[`uri${i}`];
+      ws.send(JSON.stringify(data));
       hideSearch();
       document.getElementById("song-added").innerHTML =
         "Song wird hinzugefügt...";
@@ -151,16 +166,19 @@ function setupWebSocket() {
   };
 }
 
-// refresh function which gets timed every 1000 ms (on the top)
+// Refresh function which gets timed every 1000 ms (on the top)
 function refresh() {
   if (ws.readyState == 0) {
     return;
   }
 
-  ws.send("refresh Admin");
+  data.action = "refresh";
+  ws.send(JSON.stringify(data));
 
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
   if (songAdded) {
     if (counter == 3) {
@@ -175,38 +193,84 @@ function refresh() {
   }
 }
 
-// if input is entered, the value gets sent to the websocket
+// If input is entered, the value gets sent to the websocket
 const input = document.querySelector("#searchbar");
 
 input.addEventListener("change", updateValue);
 
 function updateValue() {
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
 }
+
 let data = {
-  AUTH: location.search.replace("?", ""),
-  ACTION: "",
+  adminCode: location.search.replace("?", ""),
+  action: "",
+  content: "",
 };
+
 document.getElementById("back-button").onclick = function () {
-  data.ACTION = "BACK";
+  data.action = "BACK";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("play-button").onclick = function () {
-  data.ACTION = "PLAYPAUSE";
+  data.action = "PLAYPAUSE";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("vorward-button").onclick = function () {
-  data.ACTION = "NEXT";
+  data.action = "NEXT";
   ws.send(JSON.stringify(data));
 };
 document.getElementById("toggle-state").onclick = function () {
-  data.ACTION = "TOGGLE-STATE";
+  data.action = "TOGGLE-STATE";
   ws.send(JSON.stringify(data));
 };
 
 document.getElementById("change-user-button").onclick = function () {
-  data.ACTION = "CHANGEUSER";
+  data.action = "CHANGEUSER";
   ws.send(JSON.stringify(data));
 };
+
+document.getElementById("generate-session-code").onclick = function () {
+  if (
+    confirm(
+      "Möchtest du den Session-Code neu generieren? Dadurch werden alle eingeloggten User ausgeloggt!"
+    )
+  ) {
+    data.action = "NEW-SESSION";
+    ws.send(JSON.stringify(data));
+  }
+};
+
+function setupShareButton() {
+  const btn = document.getElementById("share-session-button");
+  btn.removeEventListener("click", shareHandler);
+  btn.addEventListener("click", shareHandler);
+}
+
+function shareHandler() {
+  const shareData = {
+    title: "BytePhil Music",
+    text:
+      "Füge Songs zur Warteschlange hinzu! \nZugangscode: " +
+      sessionCode +
+      " oder nutze den Link: \n ",
+    url: mainLink + "?" + sessionCode + "/",
+  };
+
+  {
+    if (navigator.share) {
+      navigator.share(shareData).catch((err) => {
+        console.error("Share failed:", err.message);
+      });
+    } else {
+      const fallbackUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+        shareData.title + "\n" + shareData.text + "\n" + shareData.url
+      )}`;
+      window.open(fallbackUrl, "_blank");
+    }
+  }
+}

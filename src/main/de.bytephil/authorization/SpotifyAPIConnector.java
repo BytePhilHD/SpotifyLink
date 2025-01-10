@@ -46,7 +46,6 @@ public class SpotifyAPIConnector {
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
 
             Console.printout("Authentication successful!", MessageType.INFO);
-            Console.printout(authorizationCodeCredentials.getAccessToken(), MessageType.INFO);
             Main.setStartingUp(false);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             if (e.getMessage().contains("Authorization code expired")) {

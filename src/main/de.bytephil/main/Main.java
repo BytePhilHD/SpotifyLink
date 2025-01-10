@@ -5,11 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.hc.core5.http.ParseException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -19,13 +19,13 @@ import authorization.AuthenticationURI;
 import authorization.SpotifyAPIConnector;
 import entities.SongObject;
 import enums.MessageType;
+import enums.UserType;
 import handlers.SearchRequest;
 import handlers.SpotifyHandler;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsConnectContext;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -47,6 +47,8 @@ public class Main {
     private static Main instance;
 
     public static String refreshToken;
+
+    public static String sessionCode;
 
     public static SpotifyAPIConnector spotifyConnector;
 
@@ -90,6 +92,7 @@ public class Main {
         AuthenticationURI.authorizationCodeUri_Sync();
         spotifyConnector = new SpotifyAPIConnector();
         spotifyAPIHandler = new SpotifyHandler();
+        generateSessionCode(5);
     }
 
     public static void startApp() throws IOException {
@@ -109,6 +112,7 @@ public class Main {
             ws.onMessage(ctx -> {
                 String message = ctx.message().replace("?", "").replace("code=", "");
                 SpotifyAPIConnector.authorizationCode_Sync(message);
+                ctx.send(sessionCode);
             });
         });
 
@@ -153,23 +157,33 @@ public class Main {
                     ctx.closeSession();
                     return;
                 }
-                if (ctx.message().contains("AUTH")) {
-                    JSONObject data = new JSONObject(ctx.message());
+                final String content = ctx.message();
+                final JSONObject messageJSONObject = new JSONObject(content);
 
-                    if (logtIn.contains((String) data.get("AUTH"))) {
+                UserType userType = checkSessionCode(messageJSONObject);
+                if (userType == UserType.FORBIDDEN) {
+                    ctx.send("forbidden");
+                    return;
+                }
 
-                        if (data.get("ACTION").equals("PLAYPAUSE")) {
+                if (userType == UserType.ADMIN) {
+
+                    if (logtIn.contains((String) messageJSONObject.get("adminCode"))) {
+
+                        if (messageJSONObject.get("action").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
-                        } else if (data.get("ACTION").equals("NEXT")) {
+                        } else if (messageJSONObject.get("action").equals("NEXT")) {
                             spotifyConnector.songVorward();
-                        } else if (data.get("ACTION").equals("BACK")) {
+                        } else if (messageJSONObject.get("action").equals("BACK")) {
                             spotifyConnector.songBack();
-                        } else if (data.get("ACTION").equals("TOGGLE-STATE")) {
+                        } else if (messageJSONObject.get("action").equals("TOGGLE-STATE")) {
                             isRunning = !isRunning;
-                        } else if (data.get("ACTION").equals("CHANGEUSER")) {
+                        } else if (messageJSONObject.get("action").equals("CHANGEUSER")) {
                             JSONObject authJsonObject = new JSONObject();
                             authJsonObject.put("auth-url", AuthenticationURI.getAuthorizationURL());
                             ctx.send(authJsonObject.toString());
+                        } else if (messageJSONObject.get("action").equals("NEW-SESSION")) {
+                            generateSessionCode(5);
                         }
                     } else {
                         ctx.send("close");
@@ -179,18 +193,20 @@ public class Main {
                 if (!isRunning || startingUp) {
                     JSONObject songInfo = new JSONObject();
                     songInfo.put("Not-playing", true);
+                    songInfo.put("sessionCode", sessionCode);
                     ctx.send(songInfo.toString());
                     return;
                 }
-                final String content = ctx.message();
-                if (content.contains("refresh")) {
+
+                if (messageJSONObject.get("action").equals("refresh")) {
                     try {
                         JSONObject data = spotifyAPIHandler.getCurrentTrackInfo();
                         if (data != null) {
-                            if (content.contains("Admin")) {
+                            if (userType == UserType.ADMIN) {
                                 data.put("user", spotifyConnector.getUserName());
-                            } else if (content.contains("Queue")) {
-                                data.put("user", "User");
+                                data.put("sessionCode", sessionCode);
+                            } else if (messageJSONObject.get("content").equals("queue")) {
+                                data.put("user", "Unbekannt");
                                 String jsonString = objectMapper
                                         .writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
                                 JSONObject response = new JSONObject();
@@ -202,7 +218,13 @@ public class Main {
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
-                            songInfo.put("user", "User");
+                            String username = spotifyConnector.getUserName();
+                            if (username != null) {
+                                songInfo.put("user", username);
+                            } else {
+                                songInfo.put("user", "Unbekannt");
+                            }
+                            songInfo.put("sessionCode", sessionCode);
                             ctx.send(songInfo.toString());
                         }
                     } catch (Exception e1) {
@@ -210,8 +232,8 @@ public class Main {
                             SpotifyAPIConnector.refreshToken();
                         }
                     }
-                } else if (ctx.message().contains("Search:")) {
-                    String searchQuery = ctx.message().replace("Search: ", "");
+                } else if (messageJSONObject.get("action").equals("search")) {
+                    String searchQuery = messageJSONObject.get("content").toString();
                     if (searchQuery.equalsIgnoreCase("")) {
                         return;
                     }
@@ -243,8 +265,8 @@ public class Main {
                     } catch (Exception e1) {
                         e1.printStackTrace();
                     }
-                } else if (ctx.message().contains("Song-Play")) {
-                    String url = ctx.message().replace("Song-Play: ", "");
+                } else if (messageJSONObject.get("action").equals("add-song")) {
+                    String url = messageJSONObject.get("content").toString();
                     if (url.equalsIgnoreCase("undefined")) {
                         return;
                     }
@@ -293,5 +315,32 @@ public class Main {
 
     private static boolean checkSongisQueue(String uri) {
         return playedSongs.contains(uri);
+    }
+
+    private static void generateSessionCode(int length) {
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom RANDOM = new SecureRandom();
+        StringBuilder code = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            code.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+        }
+        sessionCode = code.toString();
+        Console.printout("", MessageType.INFO);
+        Console.printout("SessionCode: " + sessionCode, MessageType.INFO);
+        Console.printout("", MessageType.INFO);
+
+    }
+
+    private static UserType checkSessionCode(JSONObject content) {
+        if (content.has("sessionCode")) {
+            if (content.get("sessionCode").equals(sessionCode)) {
+                return UserType.USER;
+            }
+        } else if (content.has("adminCode")) {
+            if (logtIn.contains((String) content.get("adminCode"))) {
+                return UserType.ADMIN;
+            }
+        }
+        return UserType.FORBIDDEN;
     }
 }

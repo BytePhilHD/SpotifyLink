@@ -13,6 +13,8 @@ let cachedImages = {};
 
 let songAdded;
 
+let wrongCode = false;
+
 function hideSearch() {
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).style.visibility = "hidden";
@@ -23,20 +25,29 @@ function hideSearch() {
 }
 
 function setupWebSocket() {
+  if (wrongCode) {
+    return;
+  }
   if (ws) {
     ws.close();
   }
 
-  if (location.protocol === "http:") {
-    ws = new WebSocket(
-      "ws://" + location.hostname + ":" + location.port + "/main"
-    );
-  } else {
-    ws = new WebSocket(
-      "wss://" + location.hostname + ":" + location.port + "/main"
-    );
+  try {
+    if (location.protocol === "http:") {
+      ws = new WebSocket(
+        "ws://" + location.hostname + ":" + location.port + "/main"
+      );
+    } else {
+      ws = new WebSocket(
+        "wss://" + location.hostname + ":" + location.port + "/main"
+      );
+    }
+  } catch (e) {
+    setInterval(setupWebSocket, 2000);
   }
-
+  ws.onopen = () => {
+    refresh();
+  };
   setInterval(refresh, 2000);
 
   hideSearch();
@@ -45,11 +56,25 @@ function setupWebSocket() {
       let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
       if (queueLength == -1) {
         document.getElementById("song-added").innerHTML =
-          "Fehler beim Hinzufügen des Songs!";
+          "Lied spielt als nächstes.";
       } else {
         document.getElementById("song-added").innerHTML =
           "Lied spielt in ca. " + queueLength + " min";
         songAdded = false;
+        counter = 0;
+      }
+      return;
+    }
+    if (messageEvent.data == "forbidden") {
+      wrongCode = true;
+      document.getElementById("song-name").innerHTML = "Falscher Code!";
+      document.getElementById("song-artists").innerHTML = "Seite neuladen um den Code einzugeben."
+
+      var code = prompt("Gib den aktuellen Session Code ein:", "");
+
+      if (code != null && code != "") {
+        location.search = code.toUpperCase();
+        return;
       }
       return;
     }
@@ -145,7 +170,9 @@ function setupWebSocket() {
   // Buttons for selecting the right song
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).onclick = function () {
-      ws.send("Song-Play: " + window[`uri${i}`]);
+      data.action = "add-song";
+      data.content = window[`uri${i}`];
+      ws.send(JSON.stringify(data));
       hideSearch();
       document.getElementById("song-added").innerHTML =
         "Song wird hinzugefügt...";
@@ -165,7 +192,9 @@ input.addEventListener("change", updateValue);
 
 function updateValue() {
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
 }
 
@@ -186,19 +215,33 @@ document.getElementById("queueToggle").onclick = function () {
   }
 };
 
+let data = {
+  sessionCode: location.search.replace("?", "").replace("/", ""),
+  action: "",
+  content: "",
+};
+
 let counter = 0;
 
 function refresh() {
+  if (wrongCode) {
+    return;
+  }
   if (ws.readyState == 0) {
     return;
   }
   if (refreshQueue) {
-    ws.send("refresh Queue");
+    data.action = "refresh";
+    data.content = "queue";
+    ws.send(JSON.stringify(data));
   } else {
-    ws.send("refresh");
+    data.action = "refresh";
+    ws.send(JSON.stringify(data));
   }
   if (input.value !== null && input.value !== "") {
-    ws.send("Search: " + input.value);
+    data.action = "search";
+    data.content = input.value;
+    ws.send(JSON.stringify(data));
   }
   if (songAdded) {
     if (counter == 3) {
