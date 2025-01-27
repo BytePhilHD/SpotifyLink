@@ -57,6 +57,8 @@ function setupWebSocket() {
       if (queueLength == -1) {
         document.getElementById("song-added").innerHTML =
           "Lied spielt als nächstes.";
+        songAdded = false;
+        counter = 0;
       } else {
         document.getElementById("song-added").innerHTML =
           "Lied spielt in ca. " + queueLength + " min";
@@ -68,7 +70,8 @@ function setupWebSocket() {
     if (messageEvent.data == "forbidden") {
       wrongCode = true;
       document.getElementById("song-name").innerHTML = "Falscher Code!";
-      document.getElementById("song-artists").innerHTML = "Seite neuladen um den Code einzugeben."
+      document.getElementById("song-artists").innerHTML =
+        "Seite neuladen um den Code einzugeben.";
 
       var code = prompt("Gib den aktuellen Session Code ein:", "");
 
