@@ -116,7 +116,7 @@ public class SpotifyAPIConnector {
     public synchronized JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
         if (requestTime == null) {
             requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 2) {
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
             try {
 
                 CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();

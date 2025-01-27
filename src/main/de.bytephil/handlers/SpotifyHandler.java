@@ -42,7 +42,7 @@ public class SpotifyHandler {
     public synchronized List<SongObject> getQueueAsSongObjects() {
         if (requestTime == null) {
             requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 3) {
+        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
             List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
             List<SongObject> songObjects = new ArrayList<>();
 
