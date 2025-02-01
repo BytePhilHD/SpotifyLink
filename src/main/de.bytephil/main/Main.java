@@ -206,12 +206,8 @@ public class Main {
                         } else {
                             JSONObject songInfo = new JSONObject();
                             songInfo.put("Not-playing", true);
-                            String username = spotifyConnector.getUserName();
-                            if (username != null) {
-                                songInfo.put("user", username);
-                            } else {
-                                songInfo.put("user", "Unbekannt");
-                            }
+                            songInfo.put("user", "Unbekannt");
+
                             songInfo.put("sessionCode", sessionCode);
                             ctx.send(songInfo.toString());
                         }
