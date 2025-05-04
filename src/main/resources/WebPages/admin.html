@@ -38,7 +38,7 @@
         margin-bottom: 0px;
         height: 593px;
       ">
-    <picture style="width: 275px; height: 275"><img id="song-cover" style="
+    <picture style="width: 275px; height: 275"><img id="song-albumImageUrl" style="
             width: 300px;
             height: 300px;
             margin-bottom: 19px;
@@ -141,11 +141,11 @@
   <script src="assets/script/adminscript.js"></script>
   <script src="assets/bootstrap/js/bootstrap.min.js"></script>
   <script>
-    function createSongDiv(id, name, artists, cover, buttonText, buttonId) {
+    function createSongDiv(id, name, artists, albumImageUrl, buttonText, buttonId) {
       return `
               <div class="p-4" style="height: 90px">
                   <div class="d-flex">
-                      <img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="${id}-cover" width="50" height="50" src="${cover}" />
+                      <img class="rounded-circle flex-shrink-0 me-3 fit-albumImageUrl" id="${id}-albumImageUrl" width="50" height="50" src="${albumImageUrl}" />
                       <div>
                           <p class="fw-bold mb-0" id="${id}-name" style="color: var(--bs-blue); text-align: left; width: 175px; font-size: 15px;">
                               ${name}

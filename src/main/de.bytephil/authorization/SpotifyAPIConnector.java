@@ -130,7 +130,7 @@ public class SpotifyAPIConnector {
                     JSONObject trackInfo = new JSONObject();
                     trackInfo.put("name", track.getName());
                     trackInfo.put("artists", getArtists(track.getArtists()));
-                    trackInfo.put("cover", track.getAlbum().getImages()[0].getUrl());
+                    trackInfo.put("albumImageUrl", track.getAlbum().getImages()[0].getUrl());
                     trackInfo.put("uri", track.getUri());
                     requestTime = Instant.now();
                     cachedSong = trackInfo;

@@ -20,7 +20,7 @@ function hideSearch() {
     document.getElementById(`search-${i}-button`).style.visibility = "hidden";
     document.getElementById(`search-${i}-name`).style.visibility = "hidden";
     document.getElementById(`search-${i}-artists`).style.visibility = "hidden";
-    document.getElementById(`search-${i}-cover`).style.visibility = "hidden";
+    document.getElementById(`search-${i}-albumImageUrl`).style.visibility = "hidden";
   }
 }
 
@@ -100,14 +100,14 @@ function setupWebSocket() {
                 "visible";
               document.getElementById(`search-${i}-artists`).innerHTML =
                 search.artists;
-              document.getElementById(`search-${i}-cover`).style.visibility =
+              document.getElementById(`search-${i}-albumImageUrl`).style.visibility =
                 "visible";
-              document.getElementById(`search-${i}-cover`).src = search.cover;
+              document.getElementById(`search-${i}-albumImageUrl`).src = search.albumImageUrl;
               document.getElementById(`search-${i}-button`).style.visibility =
                 "visible";
               window[`uri${i}`] = search.uri;
               var button = document.getElementById(`search-${i}-button`);
-              if (search.played == true) {
+              if (search.isInQueue == true) {
                 button.style.backgroundColor = "#FFA500";
                 button.style.borderColor = "#FFA500";
               } else {
@@ -125,9 +125,9 @@ function setupWebSocket() {
             document.getElementById(`queue-${i}-name`).innerHTML = queue.name;
             document.getElementById(`queue-${i}-artists`).innerHTML =
               queue.artists;
-            if (queue.cover !== cachedImages[i]) {
-              document.getElementById(`queue-${i}-cover`).src = queue.cover;
-              cachedImages[i] = queue.cover;
+            if (queue.albumImageUrl !== cachedImages[i]) {
+              document.getElementById(`queue-${i}-albumImageUrl`).src = queue.albumImageUrl;
+              cachedImages[i] = queue.albumImageUrl;
             }
           }
         }
@@ -141,10 +141,11 @@ function setupWebSocket() {
             wsinput["artists"];
         }
 
-        if (wsinput["cover"] !== undefined) {
-          if (wsinput["cover"] !== cachedImage) {
-            document.getElementById("song-cover").src = wsinput["cover"];
-            cachedImage = wsinput["cover"];
+        if (wsinput["albumImageUrl"] !== undefined) {
+          console.log("Image URL: " + wsinput["albumImageUrl"]);
+          if (wsinput["albumImageUrl"] !== cachedImage) {
+            document.getElementById("song-albumImageUrl").src = wsinput["albumImageUrl"];
+            cachedImage = wsinput["albumImageUrl"];
           }
         }
 
@@ -184,7 +185,7 @@ function setupWebSocket() {
     };
   }
 
-  document.getElementById("song-cover").onclick = function () {
+  document.getElementById("song-albumImageUrl").onclick = function () {
     location.href = url;
   };
 }

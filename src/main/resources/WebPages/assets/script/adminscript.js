@@ -14,7 +14,7 @@ function hideSearch() {
     document.getElementById(`search-${i}-button`).style.visibility = "hidden";
     document.getElementById(`search-${i}-name`).style.visibility = "hidden";
     document.getElementById(`search-${i}-artists`).style.visibility = "hidden";
-    document.getElementById(`search-${i}-cover`).style.visibility = "hidden";
+    document.getElementById(`search-${i}-albumImageUrl`).style.visibility = "hidden";
   }
 }
 
@@ -92,9 +92,9 @@ function setupWebSocket() {
                 "visible";
               document.getElementById(`search-${i}-artists`).innerHTML =
                 search.artists;
-              document.getElementById(`search-${i}-cover`).style.visibility =
+              document.getElementById(`search-${i}-albumImageUrl`).style.visibility =
                 "visible";
-              document.getElementById(`search-${i}-cover`).src = search.cover;
+              document.getElementById(`search-${i}-albumImageUrl`).src = search.albumImageUrl;
               document.getElementById(`search-${i}-button`).style.visibility =
                 "visible";
               window[`uri${i}`] = search.uri;
@@ -119,10 +119,10 @@ function setupWebSocket() {
             wsinput["artists"];
         }
 
-        if (wsinput["cover"] !== undefined) {
-          if (wsinput["cover"] !== cachedImage) {
-            document.getElementById("song-cover").src = wsinput["cover"];
-            cachedImage = wsinput["cover"];
+        if (wsinput["albumImageUrl"] !== undefined) {
+          if (wsinput["albumImageUrl"] !== cachedImage) {
+            document.getElementById("song-albumImageUrl").src = wsinput["albumImageUrl"];
+            cachedImage = wsinput["albumImageUrl"];
           }
         }
 
@@ -161,7 +161,7 @@ function setupWebSocket() {
     };
   }
 
-  document.getElementById("song-cover").onclick = function () {
+  document.getElementById("song-albumImageUrl").onclick = function () {
     location.href = url;
   };
 }

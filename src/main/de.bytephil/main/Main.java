@@ -11,8 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import authorization.AuthenticationURI;
@@ -230,7 +232,9 @@ public class Main {
                         Paging<Track> trackPaging = SearchRequest.searchRequest(searchQuery);
                         List<SongObject> songList = new ArrayList<>();
 
-                        for (int i = 0; i < 3; i++) {
+                        // Begrenze die Schleife auf die Anzahl der verfügbaren Elemente
+                        int limit = Math.min(3, trackPaging.getItems().length);
+                        for (int i = 0; i < limit; i++) {
                             SongObject songObject = new SongObject(
                                     trackPaging.getItems()[i].getName(),
                                     getArtists(trackPaging.getItems()[i].getArtists()),
@@ -246,7 +250,7 @@ public class Main {
                         response.put("results", new JSONArray(jsonString));
                         ctx.send(response.toString());
                         userSearch.put(ctx.sessionId(), ctx.message());
-                    } catch (Exception e1) {
+                    } catch (JsonProcessingException | JSONException e1) {
                         e1.printStackTrace();
                     }
                 } else if (messageJSONObject.get("action").equals("add-song")) {

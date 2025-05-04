@@ -39,7 +39,7 @@
         margin-bottom: 0px;
         height: 593px;
       ">
-        <picture style="width: 275px; height: 275px"><img id="song-cover" style="
+        <picture style="width: 275px; height: 275px"><img id="song-albumImageUrl" style="
             width: 300px;
             height: 300px;
             margin-bottom: 19px;
@@ -47,7 +47,7 @@
             margin-top: -75px;
           " /></picture>
         <style>
-            #song-cover {
+            #song-albumImageUrl {
                 box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2),
                     0 0 30px rgba(255, 0, 0, 0.4), 0 0 30px rgba(0, 255, 0, 0.4),
                     0 0 30px rgba(0, 0, 255, 0.4);
@@ -125,7 +125,7 @@
                         </p>
                         <p style="color: #a4c7ed; font-size: 13px">
                             Oben siehst du den aktuell laufenden Song mit den zugehörigen
-                            Interpreten und dem Cover.&nbsp;<br />Bei der Suche kannst du nach
+                            Interpreten und dem albumImageUrl.&nbsp;<br />Bei der Suche kannst du nach
                             einem Song suchen (Spotify) und den gewünschten aus den drei Möglichkeiten
                             mit dem Button "Wählen" in die Warteschlange packen. Falls der
                             Button orange ist, wurde der Song bereits gewünscht.<br />Tipp für Suche:
@@ -151,11 +151,11 @@
     <script src="assets/script/mainpage.js"></script>
 </body>
 <script>
-    function createSongDiv(id, name, artists, cover, buttonText, buttonId) {
+    function createSongDiv(id, name, artists, albumImageUrl, buttonText, buttonId) {
         return `
             <div class="p-4" style="height: 90px">
                 <div class="d-flex">
-                    <img class="rounded-circle flex-shrink-0 me-3 fit-cover" id="${id}-cover" width="50" height="50" src="${cover}" />
+                    <img class="rounded-circle flex-shrink-0 me-3 fit-albumImageUrl" id="${id}-albumImageUrl" width="50" height="50" src="${albumImageUrl}" />
                     <div>
                         <p class="fw-bold mb-0" id="${id}-name" style="color: var(--bs-blue); text-align: left; width: 175px; font-size: 15px;">
                             ${name}

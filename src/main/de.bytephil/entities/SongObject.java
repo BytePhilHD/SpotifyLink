@@ -1,25 +1,14 @@
 package entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@lombok.Getter
-@lombok.Setter
-@lombok.AllArgsConstructor
+@Data
+@AllArgsConstructor
 public class SongObject {
-
-    @JsonProperty("name")
     private String name;
-
-    @JsonProperty("artists")
     private String artists;
-
-    @JsonProperty("cover")
-    private String cover;
-
-    @JsonProperty("uri")
+    private String albumImageUrl;
     private String uri;
-
-    @JsonProperty("played")
-    private boolean played;
-
+    private boolean isInQueue;
 }
