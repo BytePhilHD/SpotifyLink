@@ -198,7 +198,7 @@ public class SpotifyAPIConnector {
     }
 
     public Track getCurrentTrackItem() throws IOException, SpotifyWebApiException, ParseException {
-        IPlaylistItem playlistItem = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute().getItem();
+        IPlaylistItem playlistItem = getCurrentlyPlayingTrack().getItem();
         if (playlistItem == null) {
             return null;
         }
@@ -208,6 +208,10 @@ public class SpotifyAPIConnector {
             // Handle the case where the item is not a track (e.g., it's an episode)
             return null;
         }
+    }
+
+    public CurrentlyPlaying getCurrentlyPlayingTrack() throws IOException, SpotifyWebApiException, ParseException {
+        return spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
     }
 
     public void songBack() {

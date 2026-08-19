@@ -12,6 +12,15 @@
   <link rel="stylesheet" href="assets/css/Articles-Badges-images.css" />
   <link rel="stylesheet" href="assets/css/Footer-Dark-icons.css" />
   <link rel="stylesheet" href="assets/css/untitled.css" />
+  <style>
+    body { min-height: 100vh; margin: 0 !important; }
+    #searchbar { display: block; width: min(375px, calc(100% - 32px)) !important; margin: 24px auto; }
+    .admin-content { min-height: 520px; }
+    @media (min-width: 992px) {
+      .admin-content { max-width: 1200px; }
+      #song-selection-container { max-width: 620px; margin-left: auto; margin-right: auto; }
+    }
+  </style>
 </head>
 
 <body class="text-center" style="background: var(--bs-body-color); margin-bottom: -1081px">
@@ -96,9 +105,9 @@
         padding-left: 10px;
       " placeholder=" Nach Song suchen" />
   <div class="overlay" style="background: rgba(18, 18, 18, 255)"></div>
-  <div class="container py-4 py-xl-5" style="height: 700.013px">
-    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3" style="height: 602.016px">
-      <div class="col" style="height: 257.328px; margin-top: 0px">
+  <div class="container admin-content py-4 py-xl-5">
+    <div class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3">
+      <div class="col" style="margin-top: 0px">
         <div class="col">
           <p id="song-added" style="
                 color: var(--bs-orange);
@@ -133,7 +142,7 @@
         <p>
           Developed by&nbsp;<a href="https://bytephil.de" style="text-align: left">BytePhil.de</a>
         </p>
-        <p class="text-muted mb-0">Copyright © 2024 BytePhil.de</p>
+        <p class="text-muted mb-0">Copyright © 2026 BytePhil.de</p>
       </div>
     </footer>
   </div>

@@ -9,6 +9,7 @@ import authorization.SpotifyAPIConnector;
 import entities.SongObject;
 import main.Main;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
+import se.michaelthelin.spotify.model_objects.miscellaneous.CurrentlyPlaying;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
 public class SpotifyHandler {
@@ -18,25 +19,38 @@ public class SpotifyHandler {
     private List<SongObject> cachedQueuObjects;
 
     public int getDurationtoSong(String url) {
-        double lengthInSeconds = 0.0;
-        List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
-        if (userQueue.isEmpty()) {
-            return -1;
-        }
-        try {
-            lengthInSeconds += (double) spotifyAPI.getCurrentTrackItem().getDurationMs() / 1000;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        for (int attempt = 0; attempt < 5; attempt++) {
+            try {
+                CurrentlyPlaying currentlyPlaying = spotifyAPI.getCurrentlyPlayingTrack();
+                List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
+                if (currentlyPlaying == null || currentlyPlaying.getItem() == null || userQueue == null) {
+                    return -1;
+                }
 
-        for (IPlaylistItem item : userQueue) {
-            if (item.getUri().equals(url)) {
-                return (int) Math.round(lengthInSeconds / 60.0);
-            } else {
-                lengthInSeconds += (double) item.getDurationMs() / 1000;
+                Track currentTrack = (Track) currentlyPlaying.getItem();
+                long remainingMs = Math.max(0L, currentTrack.getDurationMs() - currentlyPlaying.getProgress_ms());
+                long waitMs = remainingMs;
+
+                for (IPlaylistItem item : userQueue) {
+                    if (item.getUri().equals(url)) {
+                        return (int) Math.ceil(waitMs / 60000.0);
+                    }
+                    waitMs += item.getDurationMs();
+                }
+            } catch (Exception e) {
+                return -1;
+            }
+
+            if (attempt < 4) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return -1;
+                }
             }
         }
-        return (int) Math.round(lengthInSeconds / 60.0);
+        return -1;
     }
 
     public synchronized List<SongObject> getQueueAsSongObjects() {

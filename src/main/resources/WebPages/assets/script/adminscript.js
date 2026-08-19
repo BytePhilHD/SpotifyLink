@@ -18,7 +18,7 @@ function hideSearch() {
   }
 }
 
-const port = "";
+let port = "";
 
 if (location.port != "") {
   port = ":" + location.port;
@@ -53,7 +53,7 @@ function setupWebSocket() {
       let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
       if (queueLength == -1) {
         document.getElementById("song-added").innerHTML =
-          "Fehler beim Hinzufügen des Songs!";
+          "Warteschlange wird aktualisiert...";
       } else {
         document.getElementById("song-added").innerHTML =
           "Lied spielt in ca. " + queueLength + " min";
@@ -196,10 +196,10 @@ function refresh() {
 // If input is entered, the value gets sent to the websocket
 const input = document.querySelector("#searchbar");
 
-input.addEventListener("change", updateValue);
+input.addEventListener("input", updateValue);
 
 function updateValue() {
-  if (input.value !== null && input.value !== "") {
+  if (input.value !== null && input.value !== "" && ws && ws.readyState === WebSocket.OPEN) {
     data.action = "search";
     data.content = input.value;
     ws.send(JSON.stringify(data));

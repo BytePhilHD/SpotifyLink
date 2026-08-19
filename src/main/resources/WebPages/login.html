@@ -15,6 +15,13 @@
     <link rel="stylesheet" href="assets/css/Articles-Badges-images.css" />
     <link rel="stylesheet" href="assets/css/Footer-Dark-icons.css" />
     <link rel="stylesheet" href="assets/css/untitled.css" />
+    <style>
+      body { min-height: 100vh; margin: 0 !important; }
+      .login-page { min-height: calc(100vh - 56px); }
+      @media (min-width: 768px) {
+        .login-card { max-width: 420px; margin-left: auto; margin-right: auto; }
+      }
+    </style>
   </head>
 
   <body
@@ -61,7 +68,7 @@
     </nav>
     <div class="overlay" style="background: rgba(18, 18, 18, 255)"></div>
     <div class="overlay" style="background: rgba(18, 18, 18, 255)"></div>
-    <div class="container py-4 py-xl-5" style="height: 579.013px">
+    <div class="container login-page py-4 py-xl-5">
       <div
         class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3"
         style="height: 625.016px"
@@ -79,7 +86,7 @@
               </div>
               <div class="row d-flex justify-content-center">
                 <div class="col-md-6 col-xl-4">
-                  <div class="card mb-5">
+                  <div class="card login-card mb-5">
                     <div
                       class="card-body d-flex flex-column align-items-center"
                       style="background: #343a40"
@@ -100,7 +107,7 @@
                           ></path>
                         </svg>
                       </div>
-                      <form class="text-center" style="height: 118px">
+                      <form class="text-center" onsubmit="return manageInput(event)">
                         <div class="mb-3"></div>
                         <div class="mb-3">
                           <input
@@ -114,7 +121,7 @@
                           <button
                             class="btn btn-primary d-block w-100"
                             type="submit"
-                            onclick="manageInput()"
+                            onclick="return manageInput(event)"
                           >
                             Login
                           </button>
@@ -143,7 +150,7 @@
               >BytePhil.de</a
             >
           </p>
-          <p class="text-muted mb-0">Copyright © 2024 BytePhil.de</p>
+          <p class="text-muted mb-0">Copyright © 2026 BytePhil.de</p>
         </div>
       </footer>
     </div>
@@ -160,10 +167,16 @@
         }
       });
 
-      function manageInput() {
+      function manageInput(event) {
+        if (event) {
+          event.preventDefault();
+        }
         let pw = document.getElementById("pw").value;
         document.getElementById("pw").value = "";
-        ws.send("LOGIN: " + pw);
+        if (pw && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send("LOGIN: " + pw);
+        }
+        return false;
       }
 
       function setupWebSocket() {

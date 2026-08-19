@@ -8,6 +8,7 @@ This program is currently only meant for private use. In the near future the pro
 
 # Developing
 Set the ```clientID``` and ```clientSecret``` values in your generated server.cfg (after first start).
+Redirect URL needs to be "http://127.0.0.1:80/" on local testing
 
 Maven build:
 ```mvn package```

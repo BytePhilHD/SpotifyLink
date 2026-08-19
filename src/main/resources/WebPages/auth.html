@@ -11,12 +11,9 @@
 
     <script>
       window.onload = setupWebSocket;
+      let codeSent = false;
 
       function setupWebSocket() {
-        let i = 80;
-        if (location.port != 0) {
-          i = location.port;
-        }
         if (location.protocol === "http:") {
           ws = new WebSocket(
             "ws://" + location.hostname + ":" + location.port + "/auth"
@@ -29,15 +26,16 @@
 
         ws.onopen = (openEvent) => {
           console.log("INFO - Connection to Server established!");
-          var code = location.search;
-          ws.send(code);
+          const code = new URLSearchParams(location.search).get("code");
+          if (code && !codeSent) {
+            codeSent = true;
+            ws.send(code);
+          }
         };
         ws.onmessage = (messageEvent) => {
           window.location.href = "/?" + messageEvent.data;
         }
-        ws.onclose = (closeEvent) => {
-          setupWebSocket();
-        };
+        ws.onclose = (closeEvent) => {};
         ws.onerror = (errorEvent) => {
           console.log("Server Error!");
         };

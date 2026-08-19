@@ -56,7 +56,7 @@ function setupWebSocket() {
       let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
       if (queueLength == -1) {
         document.getElementById("song-added").innerHTML =
-          "Lied spielt als nächstes.";
+          "Warteschlange wird aktualisiert...";
         songAdded = false;
         counter = 0;
       } else {
@@ -192,10 +192,10 @@ function setupWebSocket() {
 
 const input = document.querySelector("#searchbar");
 
-input.addEventListener("change", updateValue);
+input.addEventListener("input", updateValue);
 
 function updateValue() {
-  if (input.value !== null && input.value !== "") {
+  if (input.value !== null && input.value !== "" && ws && ws.readyState === WebSocket.OPEN) {
     data.action = "search";
     data.content = input.value;
     ws.send(JSON.stringify(data));
