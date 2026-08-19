@@ -17,8 +17,15 @@
     <link rel="stylesheet" href="assets/css/untitled.css" />
     <style>
       body { min-height: 100vh; margin: 0 !important; }
-      .login-page { min-height: calc(100vh - 56px); }
+      .login-page { min-height: calc(100vh - 56px); display: flex; flex-direction: column; }
+      .login-layout { flex: 1; }
+      .login-section { padding-top: clamp(24px, 8vh, 96px) !important; }
+      .login-form { width: min(100%, 320px); }
+      .login-footer { margin-top: auto; }
+      .login-footer > div { height: auto !important; min-height: 113px; }
       @media (min-width: 768px) {
+        .login-layout { display: block; }
+        .login-section { max-width: 760px; margin: 0 auto; }
         .login-card { max-width: 420px; margin-left: auto; margin-right: auto; }
       }
     </style>
@@ -26,7 +33,7 @@
 
   <body
     class="text-center"
-    style="background: var(--bs-body-color); margin-bottom: -1081px"
+    style="background: var(--bs-body-color)"
   >
     <nav
       class="navbar navbar-light navbar-expand bg-light navigation-clean"
@@ -69,12 +76,9 @@
     <div class="overlay" style="background: rgba(18, 18, 18, 255)"></div>
     <div class="overlay" style="background: rgba(18, 18, 18, 255)"></div>
     <div class="container login-page py-4 py-xl-5">
-      <div
-        class="row gy-4 row-cols-1 row-cols-md-2 row-cols-xl-3"
-        style="height: 625.016px"
-      >
-        <div class="col-md-12" style="height: 313.328px">
-          <section class="position-relative py-4 py-xl-5">
+      <div class="row login-layout">
+        <div class="col-12">
+          <section class="login-section position-relative py-4 py-xl-5">
             <div class="container">
               <div class="row mb-5">
                 <div class="col-md-8 col-xl-6 text-center mx-auto">
@@ -107,7 +111,7 @@
                           ></path>
                         </svg>
                       </div>
-                      <form class="text-center" onsubmit="return manageInput(event)">
+                      <form class="login-form text-center" onsubmit="return manageInput(event)">
                         <div class="mb-3"></div>
                         <div class="mb-3">
                           <input
@@ -135,10 +139,7 @@
           </section>
         </div>
       </div>
-      <footer
-        class="text-center bg-dark"
-        style="color: #343a40; background: var(--bs-pink)"
-      >
+      <footer class="login-footer text-center bg-dark" style="color: #343a40; background: var(--bs-pink)">
         <div
           class="container text-white py-4 py-lg-5"
           style="background: #343a40; height: 113px"
