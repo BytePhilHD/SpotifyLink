@@ -14,9 +14,13 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 
 public class SpotifyHandler {
 
+    /** How long an on demand request may reuse the last answer from Spotify. */
+    private static final long CACHE_TTL_MS = 1000;
+
     private final SpotifyAPIConnector spotifyAPI = Main.spotifyConnector;
-    private Instant requestTime;
-    private List<SongObject> cachedQueuObjects;
+    private Instant cacheTime;
+    private String cachedQueueIds;
+    private List<SongObject> cachedQueuObjects = new ArrayList<>();
 
     public int getDurationtoSong(String url) {
         for (int attempt = 0; attempt < 5; attempt++) {
@@ -53,27 +57,72 @@ public class SpotifyHandler {
         return -1;
     }
 
-    public synchronized List<SongObject> getQueueAsSongObjects() {
-        if (requestTime == null) {
-            requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
-            List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
-            List<SongObject> songObjects = new ArrayList<>();
+    /**
+     * Asks Spotify for the current queue. The track details behind the queue entries are
+     * only looked up again when the first three entries actually changed, which saves a
+     * second request on every poll where the queue stayed the same.
+     */
+    public synchronized List<SongObject> refreshQueue() {
+        List<IPlaylistItem> userQueue = spotifyAPI.getUsersQueue();
+        cacheTime = Instant.now();
 
-            Track[] tracks = SearchRequest
-                    .getSeveralTracks_Sync(
-                            userQueue.stream().limit(3).map(IPlaylistItem::getId).toArray(String[]::new));
+        if (userQueue == null) {
+            return cachedQueuObjects;
+        }
 
-            for (Track track : tracks) {
-                songObjects.add(new SongObject(track.getName(), track.getArtists()[0].getName(),
-                        track.getAlbum().getImages()[0].getUrl(),
-                        track.getUri(), false));
+        String[] ids = userQueue.stream().limit(3).map(IPlaylistItem::getId).toArray(String[]::new);
+        String signature = String.join(",", ids);
+        if (signature.equals(cachedQueueIds)) {
+            return cachedQueuObjects;
+        }
+
+        if (ids.length == 0) {
+            cachedQueueIds = signature;
+            cachedQueuObjects = new ArrayList<>();
+            return cachedQueuObjects;
+        }
+
+        Track[] tracks = SearchRequest.getSeveralTracks_Sync(ids);
+        if (tracks == null) {
+            return cachedQueuObjects;
+        }
+
+        List<SongObject> songObjects = new ArrayList<>();
+        for (Track track : tracks) {
+            if (track == null) {
+                continue;
             }
+            songObjects.add(new SongObject(track.getName(), getFirstArtist(track), getAlbumImageUrl(track),
+                    track.getUri(), false));
+        }
 
-            requestTime = Instant.now();
-            cachedQueuObjects = songObjects;
-            return songObjects;
+        cachedQueueIds = signature;
+        cachedQueuObjects = songObjects;
+        return songObjects;
+    }
+
+    /**
+     * Cached view on the queue for requests that a client asked for directly.
+     */
+    public synchronized List<SongObject> getQueueAsSongObjects() {
+        if (cacheTime == null || Duration.between(cacheTime, Instant.now()).toMillis() >= CACHE_TTL_MS) {
+            return refreshQueue();
         }
         return cachedQueuObjects;
+    }
+
+    private String getFirstArtist(Track track) {
+        if (track.getArtists() == null || track.getArtists().length == 0) {
+            return "";
+        }
+        return track.getArtists()[0].getName();
+    }
+
+    private String getAlbumImageUrl(Track track) {
+        if (track.getAlbum() == null || track.getAlbum().getImages() == null
+                || track.getAlbum().getImages().length == 0) {
+            return "";
+        }
+        return track.getAlbum().getImages()[0].getUrl();
     }
 }

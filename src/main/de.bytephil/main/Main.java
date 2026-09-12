@@ -28,9 +28,11 @@ import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.websocket.WsConfig;
 import io.javalin.websocket.WsConnectContext;
+import io.javalin.websocket.WsContext;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Track;
+import services.BroadcastService;
 import services.Console;
 import services.LoginService;
 import utils.ServerConfiguration;
@@ -58,6 +60,15 @@ public class Main {
 
     public static Main getInstance() {
         return instance;
+    }
+
+    public static SpotifyHandler getSpotifyHandler() {
+        return spotifyAPIHandler;
+    }
+
+    /** Whether the server currently mirrors a running playback, used by the push loop. */
+    public static boolean isPlaybackActive() {
+        return isRunning && !startingUp;
     }
 
     private static boolean isRunning = true;
@@ -94,6 +105,7 @@ public class Main {
         AuthenticationURI.authorizationCodeUri_Sync();
         spotifyConnector = new SpotifyAPIConnector();
         spotifyAPIHandler = new SpotifyHandler();
+        BroadcastService.start();
         generateSessionCode(5);
     }
 
@@ -134,6 +146,7 @@ public class Main {
                 }
             });
             ws.onClose(ctx -> {
+                BroadcastService.unregister(ctx.sessionId());
                 Console.printout(
                         "User disconnected from main websocket. (IP: "
                                 + (ctx.session.getRemoteAddress() != null
@@ -144,6 +157,7 @@ public class Main {
             });
             ws.onMessage(ctx -> {
                 if (blockedUsers.contains(ctx.session.getRemoteAddress().toString().replace("/", ""))) {
+                    BroadcastService.unregister(ctx.sessionId());
                     ctx.closeSession();
                     return;
                 }
@@ -152,7 +166,25 @@ public class Main {
 
                 UserType userType = checkSessionCode(messageJSONObject);
                 if (userType == UserType.FORBIDDEN) {
-                    ctx.send("forbidden");
+                    BroadcastService.unregister(ctx.sessionId());
+                    BroadcastService.sendTo(ctx, "forbidden");
+                    return;
+                }
+
+                // The client is known from here on, so it gets updates pushed to it
+                // instead of having to ask for them on a timer.
+                BroadcastService.register(ctx, userType, getAuthCode(messageJSONObject));
+
+                // Handled before the playback check, otherwise a subscription sent while the
+                // server is paused would be lost and client and server would disagree.
+                if ("queue-subscribe".equals(messageJSONObject.optString("action"))) {
+                    boolean subscribed = "on".equals(messageJSONObject.optString("content"));
+                    BroadcastService.setQueueSubscribed(ctx.sessionId(), subscribed);
+                    if (subscribed && isPlaybackActive()) {
+                        BroadcastService.sendTo(ctx,
+                                BroadcastService.buildQueuePayload(spotifyAPIHandler.getQueueAsSongObjects())
+                                        .toString());
+                    }
                     return;
                 }
 
@@ -162,62 +194,38 @@ public class Main {
 
                         if (messageJSONObject.get("action").equals("PLAYPAUSE")) {
                             spotifyConnector.playPauseSong();
+                            BroadcastService.pokeNow();
                         } else if (messageJSONObject.get("action").equals("NEXT")) {
                             spotifyConnector.songVorward();
+                            BroadcastService.pokeNow();
                         } else if (messageJSONObject.get("action").equals("BACK")) {
                             spotifyConnector.songBack();
+                            BroadcastService.pokeNow();
                         } else if (messageJSONObject.get("action").equals("TOGGLE-STATE")) {
                             isRunning = !isRunning;
+                            BroadcastService.invalidate();
+                            BroadcastService.pokeNow();
                         } else if (messageJSONObject.get("action").equals("CHANGEUSER")) {
                             JSONObject authJsonObject = new JSONObject();
                             authJsonObject.put("auth-url", AuthenticationURI.getAuthorizationURL());
-                            ctx.send(authJsonObject.toString());
+                            BroadcastService.sendTo(ctx, authJsonObject.toString());
                         } else if (messageJSONObject.get("action").equals("NEW-SESSION")) {
                             generateSessionCode(5);
                         }
                     } else {
-                        ctx.send("close");
+                        BroadcastService.sendTo(ctx, "close");
                     }
 
                 }
-                if (!isRunning || startingUp) {
-                    JSONObject songInfo = new JSONObject();
-                    songInfo.put("Not-playing", true);
-                    songInfo.put("sessionCode", sessionCode);
-                    ctx.send(songInfo.toString());
+                if (!isPlaybackActive()) {
+                    BroadcastService.sendTo(ctx, BroadcastService.buildStatePayload(null, userType).toString());
                     return;
                 }
 
                 if (messageJSONObject.get("action").equals("refresh")) {
-                    try {
-                        JSONObject data = spotifyConnector.getCurrentTrackInfo();
-                        if (data != null) {
-                            if (userType == UserType.ADMIN) {
-                                data.put("user", spotifyConnector.getUserName());
-                                data.put("sessionCode", sessionCode);
-                            } else if (messageJSONObject.get("content").equals("queue")) {
-                                data.put("user", "Unbekannt");
-                                String jsonString = objectMapper
-                                        .writeValueAsString(spotifyAPIHandler.getQueueAsSongObjects());
-                                JSONObject response = new JSONObject();
-                                response.put("type", "queue");
-                                response.put("results", new JSONArray(jsonString));
-                                ctx.send(response.toString());
-                            }
-                            ctx.send(data.toString());
-                        } else {
-                            JSONObject songInfo = new JSONObject();
-                            songInfo.put("Not-playing", true);
-                            songInfo.put("user", "Unbekannt");
-
-                            songInfo.put("sessionCode", sessionCode);
-                            ctx.send(songInfo.toString());
-                        }
-                    } catch (Exception e1) {
-                        if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
-                            SpotifyAPIConnector.refreshToken();
-                        }
-                    }
+                    // Only used to hand a freshly connected client its initial state,
+                    // everything after that arrives as a push.
+                    sendCurrentState(ctx, userType);
                 } else if (messageJSONObject.get("action").equals("search")) {
                     String searchQuery = messageJSONObject.get("content").toString();
                     if (searchQuery.equalsIgnoreCase("")) {
@@ -248,7 +256,7 @@ public class Main {
                         JSONObject response = new JSONObject();
                         response.put("type", "search");
                         response.put("results", new JSONArray(jsonString));
-                        ctx.send(response.toString());
+                        BroadcastService.sendTo(ctx, response.toString());
                         userSearch.put(ctx.sessionId(), ctx.message());
                     } catch (JsonProcessingException | JSONException e1) {
                         e1.printStackTrace();
@@ -260,7 +268,12 @@ public class Main {
                     }
                     spotifyConnector.addSongtoList(url);
                     playedSongs.add(url);
-                    ctx.send("QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
+                    // The queue changed, so a poll should pick that up right away and every
+                    // client may have to redraw its search results with the new marker.
+                    userSearch.clear();
+                    BroadcastService.pokeNow();
+                    BroadcastService.broadcastPlayedUpdate();
+                    BroadcastService.sendTo(ctx, "QUEUE-LENGTH: " + spotifyAPIHandler.getDurationtoSong(url));
                 }
             });
         });
@@ -277,6 +290,33 @@ public class Main {
                 }
             });
         });
+    }
+
+    /** Answers a single client with the state it would otherwise have to wait for. */
+    private static void sendCurrentState(WsContext ctx, UserType userType) {
+        try {
+            JSONObject trackInfo = spotifyConnector.getCurrentTrackInfo();
+            BroadcastService.sendTo(ctx, BroadcastService.buildStatePayload(trackInfo, userType).toString());
+
+            if (BroadcastService.isQueueSubscribed(ctx.sessionId())) {
+                BroadcastService.sendTo(ctx,
+                        BroadcastService.buildQueuePayload(spotifyAPIHandler.getQueueAsSongObjects()).toString());
+            }
+        } catch (Exception e1) {
+            if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
+                SpotifyAPIConnector.refreshToken();
+            }
+        }
+    }
+
+    private static String getAuthCode(JSONObject content) {
+        if (content.has("sessionCode")) {
+            return content.optString("sessionCode");
+        }
+        if (content.has("adminCode")) {
+            return content.optString("adminCode");
+        }
+        return null;
     }
 
     private static void copyFile(File dest, String source) throws IOException {
@@ -313,6 +353,11 @@ public class Main {
             code.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
         }
         sessionCode = code.toString();
+        // Everybody who joined with the previous code loses access, and the admins
+        // need the new code pushed to them.
+        BroadcastService.dropOutdatedUsers();
+        BroadcastService.invalidate();
+        BroadcastService.pokeNow();
         Console.printout("", MessageType.INFO);
         Console.printout("SessionCode: " + sessionCode, MessageType.INFO);
         Console.printout("", MessageType.INFO);

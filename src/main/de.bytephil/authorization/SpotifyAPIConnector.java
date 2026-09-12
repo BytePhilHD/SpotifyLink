@@ -28,9 +28,12 @@ public class SpotifyAPIConnector {
     private static final URI redirectUri = SpotifyHttpManager.makeUri(Main.config.webaddress + "auth.html");
     public static String code = "";
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
+    /** How long an on demand request may reuse the last answer from Spotify. */
+    private static final long CACHE_TTL_MS = 1000;
 
-    private Instant requestTime;
+    private Instant cacheTime;
     private JSONObject cachedSong;
+    private static String cachedUserName;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(CLIENT_ID)
@@ -50,6 +53,9 @@ public class SpotifyAPIConnector {
             // Set access and refresh token for further "spotifyApi" object usage
             spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
             spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
+
+            // A different account may have been authenticated, so the cached name is stale.
+            cachedUserName = null;
 
             Console.printout("Authentication successful!", MessageType.INFO);
             Main.setStartingUp(false);
@@ -95,9 +101,17 @@ public class SpotifyAPIConnector {
         }
     }
 
+    /**
+     * The display name only changes when another account is authenticated, so it is
+     * cached instead of being requested again for every admin update.
+     */
     public String getUserName() {
+        if (cachedUserName != null) {
+            return cachedUserName;
+        }
         try {
-            return spotifyApi.getCurrentUsersProfile().build().execute().getDisplayName();
+            cachedUserName = spotifyApi.getCurrentUsersProfile().build().execute().getDisplayName();
+            return cachedUserName;
         } catch (Exception e1) {
             Console.printout("Error in getUserName: " + e1.getMessage(), MessageType.ERROR);
             return null;
@@ -113,37 +127,53 @@ public class SpotifyAPIConnector {
         }
     }
 
+    /**
+     * Always asks Spotify for the current track and updates the cache. Used by the push
+     * loop, which is the only caller that needs to notice a change as early as possible.
+     */
+    public synchronized JSONObject fetchCurrentTrackInfo()
+            throws IOException, SpotifyWebApiException, ParseException {
+        CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
+        cacheTime = Instant.now();
+
+        if (currentlyPlaying == null || !(currentlyPlaying.getItem() instanceof Track)) {
+            cachedSong = null;
+            return null;
+        }
+
+        try {
+            Track track = (Track) currentlyPlaying.getItem();
+            JSONObject trackInfo = new JSONObject();
+            trackInfo.put("name", track.getName());
+            trackInfo.put("artists", getArtists(track.getArtists()));
+            trackInfo.put("albumImageUrl", getAlbumImageUrl(track));
+            trackInfo.put("uri", track.getUri());
+            cachedSong = trackInfo;
+            return trackInfo;
+        } catch (NullPointerException e) {
+            Console.printError("Error in fetchCurrentTrackInfo ", MessageType.ERROR, e);
+            cachedSong = null;
+            return null;
+        }
+    }
+
+    /**
+     * Cached view on the current track for requests that a client asked for directly.
+     * Refreshes at most once per second so a burst of clients cannot hammer Spotify.
+     */
     public synchronized JSONObject getCurrentTrackInfo() throws IOException, SpotifyWebApiException, ParseException {
-        if (requestTime == null) {
-            requestTime = Instant.now();
-        } else if (Duration.between(requestTime, Instant.now()).getSeconds() >= 1) {
-            try {
-
-                CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
-                if (currentlyPlaying == null) {
-                    return null;
-                }
-                IPlaylistItem playlistItem = currentlyPlaying.getItem();
-
-                if (playlistItem instanceof Track) {
-                    Track track = (Track) playlistItem;
-                    JSONObject trackInfo = new JSONObject();
-                    trackInfo.put("name", track.getName());
-                    trackInfo.put("artists", getArtists(track.getArtists()));
-                    trackInfo.put("albumImageUrl", track.getAlbum().getImages()[0].getUrl());
-                    trackInfo.put("uri", track.getUri());
-                    requestTime = Instant.now();
-                    cachedSong = trackInfo;
-                    return trackInfo;
-                } else {
-                    return null;
-                }
-            } catch (NullPointerException e) {
-                Console.printError("Error in getCurrentTrackInfo ", MessageType.ERROR, e);
-                return null;
-            }
+        if (cacheTime == null || Duration.between(cacheTime, Instant.now()).toMillis() >= CACHE_TTL_MS) {
+            return fetchCurrentTrackInfo();
         }
         return cachedSong;
+    }
+
+    private String getAlbumImageUrl(Track track) {
+        if (track.getAlbum() == null || track.getAlbum().getImages() == null
+                || track.getAlbum().getImages().length == 0) {
+            return "";
+        }
+        return track.getAlbum().getImages()[0].getUrl();
     }
 
     private String getArtists(ArtistSimplified[] artists) {

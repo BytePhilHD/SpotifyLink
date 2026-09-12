@@ -1,13 +1,23 @@
-window.onload = setupWebSocket;
+window.onload = init;
+
 let ws;
+let url;
 let uri1;
 let uri2;
 let uri3;
 let sentValue;
-let songAdded;
-let counter = 0;
 let cachedImage;
 let sessionCode;
+
+// A single reconnect timer, so a flaky connection cannot stack up timers.
+let reconnectTimer = null;
+let reconnectDelay = 1000;
+const MAX_RECONNECT_DELAY = 15000;
+
+let searchDebounceTimer = null;
+let addSongTimer = null;
+const SEARCH_DEBOUNCE_MS = 250;
+const ADD_SONG_TIMEOUT_MS = 8000;
 
 function hideSearch() {
   for (let i = 1; i <= 3; i++) {
@@ -26,184 +36,202 @@ if (location.port != "") {
 
 const mainLink = location.protocol + "//" + location.hostname + port;
 
-function setupWebSocket() {
-  try {
-    if (location.protocol === "http:") {
-      ws = new WebSocket(
-        "ws://" + location.hostname + ":" + location.port + "/main"
-      );
-    } else {
-      ws = new WebSocket(
-        "wss://" + location.hostname + ":" + location.port + "/main"
-      );
-    }
-  } catch (e) {
-    setInterval(setupWebSocket, 2000);
-  }
-
-  setInterval(refresh, 2000);
-
+// Runs once the page is fully loaded, because the search entries are built by an
+// inline script that runs after this file.
+function init() {
   hideSearch();
-  ws.onmessage = (messageEvent) => {
-    if (messageEvent.data == "close") {
-      window.location.href = mainLink + "/login.html";
-      return;
-    }
-    if (messageEvent.data.includes("QUEUE-LENGTH: ")) {
-      let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
-      if (queueLength == -1) {
-        document.getElementById("song-added").innerHTML =
-          "Warteschlange wird aktualisiert...";
-      } else {
-        document.getElementById("song-added").innerHTML =
-          "Lied spielt in ca. " + queueLength + " min";
-        songAdded = false;
-      }
-      return;
-    }
-    try {
-      let wsinput = JSON.parse(messageEvent.data);
 
-      if (wsinput["user"] !== undefined) {
-        document.getElementById("username").innerHTML = wsinput["user"];
-      }
-      if (wsinput["sessionCode"] !== undefined) {
-        sessionCode = wsinput["sessionCode"];
-        document.getElementById("sessionCode").innerHTML = sessionCode;
-
-        setupShareButton();
-      } else if (wsinput["auth-url"] !== undefined) {
-        window.location.href = wsinput["auth-url"];
-      }
-
-      if (wsinput.type == "search") {
-        if (document.querySelector("#searchbar").value != sentValue) {
-          let searchResults = wsinput.results;
-
-          for (let i = 1; i <= 3; i++) {
-            if (searchResults[i - 1]) {
-              let search = searchResults[i - 1];
-              document.getElementById(`search-${i}-name`).style.visibility =
-                "visible";
-              document.getElementById(`search-${i}-name`).innerHTML =
-                search.name;
-              document.getElementById("song-added").innerHTML = " ";
-              document.getElementById(`search-${i}-artists`).style.visibility =
-                "visible";
-              document.getElementById(`search-${i}-artists`).innerHTML =
-                search.artists;
-              document.getElementById(`search-${i}-albumImageUrl`).style.visibility =
-                "visible";
-              document.getElementById(`search-${i}-albumImageUrl`).src = search.albumImageUrl;
-              document.getElementById(`search-${i}-button`).style.visibility =
-                "visible";
-              window[`uri${i}`] = search.uri;
-              var button = document.getElementById(`search-${i}-button`);
-              if (search.played == true) {
-                button.style.backgroundColor = "#FFA500";
-                button.style.borderColor = "#FFA500";
-              } else {
-                button.style.backgroundColor = "";
-                button.style.borderColor = "";
-              }
-            }
-          }
-        }
-      } else {
-        if (wsinput["name"] !== undefined) {
-          document.getElementById("song-name").innerHTML = wsinput["name"];
-        }
-
-        if (wsinput["artists"] !== undefined) {
-          document.getElementById("song-artists").innerHTML =
-            wsinput["artists"];
-        }
-
-        if (wsinput["albumImageUrl"] !== undefined) {
-          if (wsinput["albumImageUrl"] !== cachedImage) {
-            document.getElementById("song-albumImageUrl").src = wsinput["albumImageUrl"];
-            cachedImage = wsinput["albumImageUrl"];
-          }
-        }
-
-        if (wsinput["uri"] !== undefined) {
-          url = wsinput["uri"];
-        }
-
-        if (wsinput["Not-playing"]) {
-          document.getElementById("song-name").innerHTML = "Kein Song läuft";
-          document.getElementById("song-artists").innerHTML = "...";
-        }
-      }
-    } catch (e) {
-      console.error("Error parsing JSON:", e);
-    }
-  };
-  ws.onclose = (closeEvent) => {
-    if (ws.readyState == 0) {
-      return;
-    } else {
-      ws = null;
-      setupWebSocket();
-    }
-  };
-  // Buttons for selecting the right song
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`search-${i}-button`).onclick = function () {
-      data.action = "add-song";
-      data.content = window[`uri${i}`];
-      ws.send(JSON.stringify(data));
+      if (!window[`uri${i}`] || !send("add-song", window[`uri${i}`])) {
+        return;
+      }
       hideSearch();
-      document.getElementById("song-added").innerHTML =
-        "Song wird hinzugefügt...";
+      markSongAdded();
       sentValue = document.querySelector("#searchbar").value;
-      songAdded = true;
     };
   }
 
   document.getElementById("song-albumImageUrl").onclick = function () {
-    location.href = url;
+    if (url) {
+      location.href = url;
+    }
   };
+
+  setupWebSocket();
 }
 
-// Refresh function which gets timed every 1000 ms (on the top)
-function refresh() {
-  if (ws.readyState == 0) {
+function setupWebSocket() {
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+
+  const protocol = location.protocol === "http:" ? "ws://" : "wss://";
+  try {
+    ws = new WebSocket(protocol + location.hostname + ":" + location.port + "/main");
+  } catch (e) {
+    scheduleReconnect();
     return;
   }
 
-  data.action = "refresh";
-  ws.send(JSON.stringify(data));
-
-  if (input.value !== null && input.value !== "") {
-    data.action = "search";
-    data.content = input.value;
-    ws.send(JSON.stringify(data));
-  }
-  if (songAdded) {
-    if (counter == 3) {
-      document.getElementById("song-added").innerHTML =
-        "Fehler beim Hinzufügen des Songs!";
-      counter = 0;
-      songAdded = false;
-      return;
-    } else {
-      counter++;
+  ws.onopen = () => {
+    reconnectDelay = 1000;
+    // Ask for the current state once. Everything after that is pushed by the server.
+    send("refresh");
+    if (input.value) {
+      sendSearch();
     }
+  };
+
+  ws.onmessage = handleMessage;
+
+  ws.onclose = () => {
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => {
+    // onclose follows and takes care of reconnecting.
+  };
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) {
+    return;
   }
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    setupWebSocket();
+  }, reconnectDelay);
+  reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+}
+
+function handleMessage(messageEvent) {
+  if (messageEvent.data == "close") {
+    window.location.href = mainLink + "/login.html";
+    return;
+  }
+  if (messageEvent.data.includes("QUEUE-LENGTH: ")) {
+    clearTimeout(addSongTimer);
+    addSongTimer = null;
+
+    let queueLength = messageEvent.data.replace("QUEUE-LENGTH: ", "");
+    if (queueLength == -1) {
+      document.getElementById("song-added").innerHTML =
+        "Warteschlange wird aktualisiert...";
+    } else {
+      document.getElementById("song-added").innerHTML =
+        "Lied spielt in ca. " + queueLength + " min";
+    }
+    return;
+  }
+  try {
+    let wsinput = JSON.parse(messageEvent.data);
+
+    if (wsinput["user"] !== undefined) {
+      document.getElementById("username").innerHTML = wsinput["user"];
+    }
+    if (wsinput["sessionCode"] !== undefined) {
+      sessionCode = wsinput["sessionCode"];
+      document.getElementById("sessionCode").innerHTML = sessionCode;
+
+      setupShareButton();
+    } else if (wsinput["auth-url"] !== undefined) {
+      window.location.href = wsinput["auth-url"];
+    }
+
+    if (wsinput.type == "played-update") {
+      // Somebody requested a song, so the markers on open search results are stale.
+      if (input.value && input.value !== sentValue) {
+        sendSearch();
+      }
+    } else if (wsinput.type == "search") {
+      if (document.querySelector("#searchbar").value != sentValue) {
+        let searchResults = wsinput.results;
+
+        for (let i = 1; i <= 3; i++) {
+          if (searchResults[i - 1]) {
+            let search = searchResults[i - 1];
+            document.getElementById(`search-${i}-name`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-name`).innerHTML =
+              search.name;
+            document.getElementById("song-added").innerHTML = " ";
+            document.getElementById(`search-${i}-artists`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-artists`).innerHTML =
+              search.artists;
+            document.getElementById(`search-${i}-albumImageUrl`).style.visibility =
+              "visible";
+            document.getElementById(`search-${i}-albumImageUrl`).src = search.albumImageUrl;
+            document.getElementById(`search-${i}-button`).style.visibility =
+              "visible";
+            window[`uri${i}`] = search.uri;
+            var button = document.getElementById(`search-${i}-button`);
+            if (search.inQueue == true) {
+              button.style.backgroundColor = "#FFA500";
+              button.style.borderColor = "#FFA500";
+            } else {
+              button.style.backgroundColor = "";
+              button.style.borderColor = "";
+            }
+          }
+        }
+      }
+    } else {
+      if (wsinput["name"] !== undefined) {
+        document.getElementById("song-name").innerHTML = wsinput["name"];
+      }
+
+      if (wsinput["artists"] !== undefined) {
+        document.getElementById("song-artists").innerHTML =
+          wsinput["artists"];
+      }
+
+      if (wsinput["albumImageUrl"] !== undefined) {
+        if (wsinput["albumImageUrl"] !== cachedImage) {
+          document.getElementById("song-albumImageUrl").src = wsinput["albumImageUrl"];
+          cachedImage = wsinput["albumImageUrl"];
+        }
+      }
+
+      if (wsinput["uri"] !== undefined) {
+        url = wsinput["uri"];
+      }
+
+      if (wsinput["Not-playing"]) {
+        document.getElementById("song-name").innerHTML = "Kein Song läuft";
+        document.getElementById("song-artists").innerHTML = "...";
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing JSON:", e);
+  }
+}
+
+function markSongAdded() {
+  document.getElementById("song-added").innerHTML = "Song wird hinzugefügt...";
+  clearTimeout(addSongTimer);
+  addSongTimer = setTimeout(() => {
+    document.getElementById("song-added").innerHTML =
+      "Fehler beim Hinzufügen des Songs!";
+    addSongTimer = null;
+  }, ADD_SONG_TIMEOUT_MS);
 }
 
 // If input is entered, the value gets sent to the websocket
 const input = document.querySelector("#searchbar");
 
-input.addEventListener("input", updateValue);
+// Debounced, so holding down a key does not trigger one Spotify search per character.
+input.addEventListener("input", function () {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(sendSearch, SEARCH_DEBOUNCE_MS);
+});
 
-function updateValue() {
-  if (input.value !== null && input.value !== "" && ws && ws.readyState === WebSocket.OPEN) {
-    data.action = "search";
-    data.content = input.value;
-    ws.send(JSON.stringify(data));
+function sendSearch() {
+  if (!input.value) {
+    hideSearch();
+    return;
   }
+  send("search", input.value);
 }
 
 let data = {
@@ -212,26 +240,31 @@ let data = {
   content: "",
 };
 
-document.getElementById("back-button").onclick = function () {
-  data.action = "BACK";
+function send(action, content) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    return false;
+  }
+  data.action = action;
+  data.content = content === undefined ? "" : content;
   ws.send(JSON.stringify(data));
+  return true;
+}
+
+document.getElementById("back-button").onclick = function () {
+  send("BACK");
 };
 document.getElementById("play-button").onclick = function () {
-  data.action = "PLAYPAUSE";
-  ws.send(JSON.stringify(data));
+  send("PLAYPAUSE");
 };
 document.getElementById("vorward-button").onclick = function () {
-  data.action = "NEXT";
-  ws.send(JSON.stringify(data));
+  send("NEXT");
 };
 document.getElementById("toggle-state").onclick = function () {
-  data.action = "TOGGLE-STATE";
-  ws.send(JSON.stringify(data));
+  send("TOGGLE-STATE");
 };
 
 document.getElementById("change-user-button").onclick = function () {
-  data.action = "CHANGEUSER";
-  ws.send(JSON.stringify(data));
+  send("CHANGEUSER");
 };
 
 document.getElementById("generate-session-code").onclick = function () {
@@ -240,8 +273,7 @@ document.getElementById("generate-session-code").onclick = function () {
       "Möchtest du den Session-Code neu generieren? Dadurch werden alle eingeloggten User ausgeloggt!"
     )
   ) {
-    data.action = "NEW-SESSION";
-    ws.send(JSON.stringify(data));
+    send("NEW-SESSION");
   }
 };
 
