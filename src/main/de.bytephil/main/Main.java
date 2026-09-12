@@ -346,7 +346,7 @@ public class Main {
     }
 
     private static void generateSessionCode(int length) {
-        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         SecureRandom RANDOM = new SecureRandom();
         StringBuilder code = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
