@@ -15,6 +15,7 @@ import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.exceptions.detailed.UnauthorizedException;
 import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 import se.michaelthelin.spotify.model_objects.miscellaneous.CurrentlyPlaying;
@@ -30,10 +31,21 @@ public class SpotifyAPIConnector {
     private static final long PAUSE_BETWEEN_REQUESTS_MS = 200;
     /** How long an on demand request may reuse the last answer from Spotify. */
     private static final long CACHE_TTL_MS = 1000;
+    /**
+     * Spotify hands out an access token that is valid for one hour. It is renewed this much
+     * earlier, so a request can never race the expiry.
+     */
+    private static final long TOKEN_REFRESH_MARGIN_SECONDS = 120;
+    /** How long to wait after a failed refresh, so a token that cannot be renewed does not flood the console. */
+    private static final long REFRESH_RETRY_DELAY_MS = 30000L;
 
     private Instant cacheTime;
     private JSONObject cachedSong;
     private static String cachedUserName;
+
+    /** When the current access token stops working. Null until something was authenticated. */
+    private static Instant tokenExpiry;
+    private static Instant lastFailedRefresh;
 
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(CLIENT_ID)
@@ -51,8 +63,7 @@ public class SpotifyAPIConnector {
                     .build().execute();
 
             // Set access and refresh token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
-            spotifyApi.setRefreshToken(authorizationCodeCredentials.getRefreshToken());
+            rememberCredentials(authorizationCodeCredentials);
 
             // A different account may have been authenticated, so the cached name is stale.
             cachedUserName = null;
@@ -60,7 +71,7 @@ public class SpotifyAPIConnector {
             Console.printout("Authentication successful!", MessageType.INFO);
             Main.setStartingUp(false);
         } catch (IOException | SpotifyWebApiException | ParseException e) {
-            if (e.getMessage().contains("Authorization code expired")) {
+            if (e.getMessage() != null && e.getMessage().contains("Authorization code expired")) {
                 refreshToken();
             } else {
                 Console.printError("Error at SpotifyAPIConnector", MessageType.ERROR, e);
@@ -68,23 +79,109 @@ public class SpotifyAPIConnector {
         }
     }
 
-    public static void refreshToken() {
+    /**
+     * Stores a freshly issued token together with the moment it stops working. Spotify only
+     * sends a new refresh token now and then, so the old one is kept when none came back.
+     */
+    private static synchronized void rememberCredentials(AuthorizationCodeCredentials credentials) {
+        spotifyApi.setAccessToken(credentials.getAccessToken());
+        if (credentials.getRefreshToken() != null) {
+            spotifyApi.setRefreshToken(credentials.getRefreshToken());
+        }
+        Main.refreshToken = spotifyApi.getRefreshToken();
+        tokenExpiry = (credentials.getExpiresIn() == null)
+                ? null
+                : Instant.now().plusSeconds(credentials.getExpiresIn());
+        lastFailedRefresh = null;
+    }
+
+    /** True while there is no usable token, or while the one at hand is about to run out. */
+    private static synchronized boolean tokenNeedsRefresh() {
+        if (spotifyApi.getAccessToken() == null) {
+            return true;
+        }
+        return tokenExpiry == null
+                || !Instant.now().isBefore(tokenExpiry.minusSeconds(TOKEN_REFRESH_MARGIN_SECONDS));
+    }
+
+    /**
+     * Renews the access token. Returns whether a usable token is available afterwards, so a
+     * caller can tell a rejection it can recover from apart from one that needs a new login.
+     */
+    public static synchronized boolean refreshToken() {
+        if (lastFailedRefresh != null
+                && Duration.between(lastFailedRefresh, Instant.now()).toMillis() < REFRESH_RETRY_DELAY_MS) {
+            // A refresh that just failed will not succeed a second later, and the poll runs
+            // every second, so the next attempt is held back instead.
+            return false;
+        }
+        if (spotifyApi.getRefreshToken() == null) {
+            // Happens while the server is up but nobody authenticated yet. The cooldown above
+            // keeps that from being reported over and over.
+            lastFailedRefresh = Instant.now();
+            Console.printout("Cannot refresh the Spotify token, no account is authenticated.", MessageType.WARNING);
+            return false;
+        }
         try {
             final AuthorizationCodeCredentials authorizationCodeCredentials = spotifyApi.authorizationCodeRefresh()
                     .build().execute();
 
-            // Set access and refresh token for further "spotifyApi" object usage
-            spotifyApi.setAccessToken(authorizationCodeCredentials.getAccessToken());
+            rememberCredentials(authorizationCodeCredentials);
 
             Console.printout("Token refreshed successfully!", MessageType.INFO);
+            return true;
         } catch (IOException | SpotifyWebApiException | ParseException e) {
+            lastFailedRefresh = Instant.now();
             Console.printout("Error refreshing token: " + e.getMessage(), MessageType.ERROR);
+            return false;
+        }
+    }
+
+    /**
+     * Whether Spotify refused a request because of the token. The wording differs per endpoint
+     * ("The access token expired", "Missing/invalid/expired access token"), so the rejection
+     * itself is what counts here, not the text that came with it.
+     */
+    public static boolean isAuthError(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            if (current instanceof UnauthorizedException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.contains("access token")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private interface SpotifyCall<T> {
+        T execute() throws IOException, SpotifyWebApiException, ParseException;
+    }
+
+    /**
+     * Runs a request with a token that is known to be valid. The token is renewed before it
+     * expires and, should Spotify reject it anyway, once more right after the rejection.
+     * Without this, every request failed roughly an hour after the authentication and only a
+     * restart of the server brought the connection back.
+     */
+    private static <T> T call(SpotifyCall<T> request) throws IOException, SpotifyWebApiException, ParseException {
+        if (tokenNeedsRefresh()) {
+            refreshToken();
+        }
+        try {
+            return request.execute();
+        } catch (UnauthorizedException e) {
+            if (!refreshToken()) {
+                throw e;
+            }
+            return request.execute();
         }
     }
 
     public void addSongtoList(String uri) {
         try {
-            spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute();
+            call(() -> spotifyApi.addItemToUsersPlaybackQueue(uri).build().execute());
         } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
         }
@@ -93,8 +190,7 @@ public class SpotifyAPIConnector {
 
     public List<IPlaylistItem> getUsersQueue() {
         try {
-            List<IPlaylistItem> queue = spotifyApi.getTheUsersQueue().build().execute().getQueue();
-            return queue;
+            return call(() -> spotifyApi.getTheUsersQueue().build().execute().getQueue());
         } catch (Exception e1) {
             Console.printout(e1.getMessage(), MessageType.ERROR);
             return null;
@@ -110,7 +206,7 @@ public class SpotifyAPIConnector {
             return cachedUserName;
         }
         try {
-            cachedUserName = spotifyApi.getCurrentUsersProfile().build().execute().getDisplayName();
+            cachedUserName = call(() -> spotifyApi.getCurrentUsersProfile().build().execute().getDisplayName());
             return cachedUserName;
         } catch (Exception e1) {
             Console.printout("Error in getUserName: " + e1.getMessage(), MessageType.ERROR);
@@ -133,7 +229,7 @@ public class SpotifyAPIConnector {
      */
     public synchronized JSONObject fetchCurrentTrackInfo()
             throws IOException, SpotifyWebApiException, ParseException {
-        CurrentlyPlaying currentlyPlaying = spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
+        CurrentlyPlaying currentlyPlaying = getCurrentlyPlayingTrack();
         cacheTime = Instant.now();
 
         if (currentlyPlaying == null || !(currentlyPlaying.getItem() instanceof Track)) {
@@ -199,11 +295,12 @@ public class SpotifyAPIConnector {
 
     public String getAlbumCover() {
         try {
-            String trackID = getCurrentTrackItem().getId();
+            final String trackID = getCurrentTrackItem().getId();
             if (!trackID.equals(currentTrackId)) {
                 currentTrackId = trackID;
                 TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS); // Pause between requests
-                currentAlbumCover = spotifyApi.getTrack(trackID).build().execute().getAlbum().getImages()[0].getUrl();
+                currentAlbumCover = call(
+                        () -> spotifyApi.getTrack(trackID).build().execute().getAlbum().getImages()[0].getUrl());
             }
             return currentAlbumCover;
         } catch (Exception e1) {
@@ -214,11 +311,11 @@ public class SpotifyAPIConnector {
 
     public ArtistSimplified[] currentSongArtist() {
         try {
-            String id = getCurrentTrackItem().getId();
+            final String id = getCurrentTrackItem().getId();
             if (!id.equals(currentTrackId)) {
                 currentTrackId = id;
                 TimeUnit.MILLISECONDS.sleep(PAUSE_BETWEEN_REQUESTS_MS); // Pause between requests
-                currentTrackArtists = spotifyApi.getTrack(id).build().execute().getArtists();
+                currentTrackArtists = call(() -> spotifyApi.getTrack(id).build().execute().getArtists());
             }
             return currentTrackArtists;
         } catch (Exception e1) {
@@ -228,37 +325,41 @@ public class SpotifyAPIConnector {
     }
 
     public Track getCurrentTrackItem() throws IOException, SpotifyWebApiException, ParseException {
-        IPlaylistItem playlistItem = getCurrentlyPlayingTrack().getItem();
+        CurrentlyPlaying currentlyPlaying = getCurrentlyPlayingTrack();
+        if (currentlyPlaying == null) {
+            return null;
+        }
+        IPlaylistItem playlistItem = currentlyPlaying.getItem();
         if (playlistItem == null) {
             return null;
         }
         if (playlistItem instanceof Track) {
             return (Track) playlistItem;
         } else {
-            // Handle the case where the item is not a track (e.g., it's an episode)
+            // Handle the case where the item is not a track (e.g. an episode)
             return null;
         }
     }
 
     public CurrentlyPlaying getCurrentlyPlayingTrack() throws IOException, SpotifyWebApiException, ParseException {
-        return spotifyApi.getUsersCurrentlyPlayingTrack().build().execute();
+        return call(() -> spotifyApi.getUsersCurrentlyPlayingTrack().build().execute());
     }
 
     public void songBack() {
         try {
-            spotifyApi.skipUsersPlaybackToPreviousTrack().build().execute();
+            call(() -> spotifyApi.skipUsersPlaybackToPreviousTrack().build().execute());
         } catch (Exception e1) {
         }
     }
 
     public void playPauseSong() {
         try {
-            spotifyApi.pauseUsersPlayback().build().execute();
+            call(() -> spotifyApi.pauseUsersPlayback().build().execute());
             return;
         } catch (Exception e1) {
         }
         try {
-            spotifyApi.startResumeUsersPlayback().build().execute();
+            call(() -> spotifyApi.startResumeUsersPlayback().build().execute());
             return;
         } catch (Exception e1) {
         }
@@ -266,7 +367,7 @@ public class SpotifyAPIConnector {
 
     public void songVorward() {
         try {
-            spotifyApi.skipUsersPlaybackToNextTrack().build().execute();
+            call(() -> spotifyApi.skipUsersPlaybackToNextTrack().build().execute());
         } catch (Exception e1) {
         }
     }

@@ -306,8 +306,10 @@ public final class BroadcastService {
 
     private static void handlePollError(Exception e) {
         String message = e.getMessage();
-        if (message != null && message.contains("The access token expired")) {
-            SpotifyAPIConnector.refreshToken();
+        // A rejected token is not worth reporting as long as it can be renewed. Only a
+        // refresh that did not work leaves something the operator has to know about.
+        if (SpotifyAPIConnector.isAuthError(e) && SpotifyAPIConnector.refreshToken()) {
+            lastErrorMessage = null;
             return;
         }
         // The poll runs every second, so the same failure must not flood the console.

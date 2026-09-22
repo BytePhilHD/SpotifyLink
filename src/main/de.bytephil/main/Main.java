@@ -303,7 +303,7 @@ public class Main {
                         BroadcastService.buildQueuePayload(spotifyAPIHandler.getQueueAsSongObjects()).toString());
             }
         } catch (Exception e1) {
-            if (e1.getMessage() != null && e1.getMessage().contains("The access token expired")) {
+            if (SpotifyAPIConnector.isAuthError(e1)) {
                 SpotifyAPIConnector.refreshToken();
             }
         }
