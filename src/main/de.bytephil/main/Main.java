@@ -305,7 +305,11 @@ public class Main {
         } catch (Exception e1) {
             if (SpotifyAPIConnector.isAuthError(e1)) {
                 SpotifyAPIConnector.refreshToken();
+                return;
             }
+            // Everything else used to be dropped here, which is why a client that reloaded and
+            // still saw nothing left no trace at all in the console.
+            Console.printError("Error while answering a client with the current state", MessageType.ERROR, e1);
         }
     }
 

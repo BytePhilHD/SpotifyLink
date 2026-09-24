@@ -34,6 +34,10 @@ public final class BroadcastService {
     private static final long POLL_INTERVAL_MS = 1000L;
     /** Small delay before an extra poll triggered by an admin action, so Spotify has applied it. */
     private static final long POKE_DELAY_MS = 250L;
+    /** How often the watchdog looks whether the poll loop is still getting anywhere. */
+    private static final long WATCHDOG_INTERVAL_MS = 15000L;
+    /** A single poll taking longer than this is stuck on something and is reported. */
+    private static final long POLL_STALL_THRESHOLD_MS = 15000L;
 
     private static final String NOT_PLAYING = "NOT-PLAYING";
     private static final String IDLE = "IDLE";
@@ -42,6 +46,13 @@ public final class BroadcastService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private static ScheduledExecutorService scheduler;
+    private static ScheduledExecutorService watchdog;
+
+    /** The thread running the poll loop, kept so a stalled poll can be reported with its stack. */
+    private static volatile Thread pollThread;
+    /** When the poll currently running started, or 0 while no poll is in flight. */
+    private static volatile long pollStartedAt;
+    private static volatile boolean stallReported;
 
     private static String lastTrackSignature;
     private static String lastQueueSignature;
@@ -59,15 +70,46 @@ public final class BroadcastService {
             public Thread newThread(Runnable runnable) {
                 Thread thread = new Thread(runnable, "spotify-poller");
                 thread.setDaemon(true);
+                pollThread = thread;
                 return thread;
             }
         });
         scheduler.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                poll();
+                pollStartedAt = System.currentTimeMillis();
+                try {
+                    poll();
+                } catch (Throwable throwable) {
+                    // scheduleWithFixedDelay drops the task for good as soon as something
+                    // escapes here, and it does so silently. From the outside that looks like
+                    // a server that simply stopped updating, so nothing may ever leave.
+                    Console.printError("Unexpected error in the push service, the poll loop keeps running",
+                            MessageType.ERROR, throwable);
+                } finally {
+                    pollStartedAt = 0L;
+                    stallReported = false;
+                }
             }
         }, POLL_INTERVAL_MS, POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
+
+        // Runs on its own thread on purpose: a watchdog sharing the poll thread would sit in
+        // the same queue as the poll it is supposed to be watching.
+        watchdog = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable, "spotify-poll-watchdog");
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
+        watchdog.scheduleWithFixedDelay(new Runnable() {
+            @Override
+            public void run() {
+                reportStalledPoll();
+            }
+        }, WATCHDOG_INTERVAL_MS, WATCHDOG_INTERVAL_MS, TimeUnit.MILLISECONDS);
+
         Console.printout("Push service started (Spotify is polled every " + POLL_INTERVAL_MS + "ms).",
                 MessageType.INFO);
     }
@@ -76,6 +118,36 @@ public final class BroadcastService {
         if (scheduler != null) {
             scheduler.shutdownNow();
             scheduler = null;
+        }
+        if (watchdog != null) {
+            watchdog.shutdownNow();
+            watchdog = null;
+        }
+    }
+
+    /**
+     * The poll loop runs on one thread and holds the Spotify connector while it works, so a
+     * single request that never comes back stops the pushes and every directly asked question
+     * with them. That is invisible from the outside, so it is named here together with the
+     * stack of the thread that is stuck.
+     */
+    private static void reportStalledPoll() {
+        long startedAt = pollStartedAt;
+        if (startedAt == 0L || stallReported) {
+            return;
+        }
+        long runningMs = System.currentTimeMillis() - startedAt;
+        if (runningMs < POLL_STALL_THRESHOLD_MS) {
+            return;
+        }
+        stallReported = true;
+        Console.printout("A Spotify poll has been running for " + (runningMs / 1000)
+                + "s and is holding up every update. Stack of the stuck thread:", MessageType.WARNING);
+        Thread thread = pollThread;
+        if (thread != null) {
+            for (StackTraceElement element : thread.getStackTrace()) {
+                Console.printout("    at " + element, MessageType.WARNING);
+            }
         }
     }
 

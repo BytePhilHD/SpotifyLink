@@ -9,6 +9,7 @@ import org.apache.hc.core5.http.ParseException;
 import enums.MessageType;
 import main.Main;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.SpotifyHttpManager;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
@@ -22,9 +23,16 @@ public class SearchRequest {
     private static final String CLIENT_ID = Main.config.clientID;
     private static final String CLIENT_SECRET = Main.config.clientSecret;
 
+    /** Same reason as in the connector: a request without an answer must not block a thread for minutes. */
+    private static final int REQUEST_TIMEOUT_MS = 10000;
+
     private static final SpotifyApi spotifyApi = new SpotifyApi.Builder()
             .setClientId(CLIENT_ID)
             .setClientSecret(CLIENT_SECRET)
+            .setHttpManager(new SpotifyHttpManager.Builder()
+                    .setConnectionRequestTimeout(REQUEST_TIMEOUT_MS)
+                    .setSocketTimeout(REQUEST_TIMEOUT_MS)
+                    .build())
             .build();
     private static final ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials()
             .build();

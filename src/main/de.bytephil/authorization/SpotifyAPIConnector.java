@@ -38,6 +38,13 @@ public class SpotifyAPIConnector {
     private static final long TOKEN_REFRESH_MARGIN_SECONDS = 120;
     /** How long to wait after a failed refresh, so a token that cannot be renewed does not flood the console. */
     private static final long REFRESH_RETRY_DELAY_MS = 30000L;
+    /**
+     * Apache HttpClient waits for an answer indefinitely by default and only the socket gives
+     * up, after three minutes. The poll loop holds this object while a request runs, so such a
+     * request freezes both the pushes and every client that asks directly. Ten seconds is far
+     * more than Spotify ever needs.
+     */
+    private static final int REQUEST_TIMEOUT_MS = 10000;
 
     private Instant cacheTime;
     private JSONObject cachedSong;
@@ -51,6 +58,10 @@ public class SpotifyAPIConnector {
             .setClientId(CLIENT_ID)
             .setClientSecret(CLIENT_SECRET)
             .setRedirectUri(redirectUri)
+            .setHttpManager(new SpotifyHttpManager.Builder()
+                    .setConnectionRequestTimeout(REQUEST_TIMEOUT_MS)
+                    .setSocketTimeout(REQUEST_TIMEOUT_MS)
+                    .build())
             .build();
 
     private String currentTrackId = null;
@@ -133,6 +144,12 @@ public class SpotifyAPIConnector {
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             lastFailedRefresh = Instant.now();
             Console.printout("Error refreshing token: " + e.getMessage(), MessageType.ERROR);
+            return false;
+        } catch (RuntimeException e) {
+            // The HTTP and JSON layers below can throw unchecked. Letting that through would
+            // reach the scheduled poll task and kill it for good, without a word in the log.
+            lastFailedRefresh = Instant.now();
+            Console.printError("Unexpected error refreshing token", MessageType.ERROR, e);
             return false;
         }
     }
